@@ -4,7 +4,8 @@
     editingId: null,
     searchKeyword: "",
     statusFilter: "",
-    tempImage: ""
+    tempImage: "",
+    isEditMode: false
   };
 
   function generateId() {
@@ -23,7 +24,8 @@
 
   function refreshList() {
     UI.renderSummary(state.items);
-    UI.renderItemList(state.items, state.searchKeyword, state.statusFilter);
+    UI.renderItemList(state.items, state.searchKeyword, state.statusFilter, state.isEditMode);
+    document.getElementById("toggleEditBtn").textContent = state.isEditMode ? "完成" : "編輯";
   }
 
   function findItem(id) {
@@ -60,24 +62,6 @@
 
     UI.renderDetail(item);
     openModal("detailModal");
-  }
-
-  function showManage(id) {
-    const item = findItem(id);
-    if (!item) return;
-
-    UI.renderManage(item);
-    openModal("manageModal");
-
-    document.getElementById("manageEditBtn").onclick = () => {
-      closeModal("manageModal");
-      startEdit(id);
-    };
-
-    document.getElementById("manageDeleteBtn").onclick = () => {
-      closeModal("manageModal");
-      removeItem(id);
-    };
   }
 
   function removeItem(id) {
@@ -185,7 +169,6 @@
 
       if (closeType === "editor") closeModal("editorModal");
       if (closeType === "detail") closeModal("detailModal");
-      if (closeType === "manage") closeModal("manageModal");
       if (closeType === "stats") closeModal("statsModal");
       if (closeType === "settings") closeModal("settingsModal");
     });
@@ -223,6 +206,11 @@
     });
   }
 
+  function toggleEditMode() {
+    state.isEditMode = !state.isEditMode;
+    refreshList();
+  }
+
   function bindEvents() {
     document.getElementById("addBtn").addEventListener("click", startCreate);
     document.getElementById("itemForm").addEventListener("submit", submitForm);
@@ -238,6 +226,8 @@
       refreshList();
     });
 
+    document.getElementById("toggleEditBtn").addEventListener("click", toggleEditMode);
+
     document.getElementById("itemList").addEventListener("click", event => {
       const target = event.target.closest("[data-action]");
       if (!target) return;
@@ -246,7 +236,8 @@
       const id = target.dataset.id;
 
       if (action === "detail") showDetail(id);
-      if (action === "manage") showManage(id);
+      if (action === "edit") startEdit(id);
+      if (action === "delete") removeItem(id);
     });
 
     document.getElementById("summaryCard").addEventListener("click", openStats);

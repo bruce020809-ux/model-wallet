@@ -21,7 +21,7 @@
     <header class="topbar safe-top">
       <div>
         <p class="topbar-subtitle">我的模型帳本</p>
-        <h1 class="topbar-title">Model Wallet</h1>
+        <h1 class="topbar-title">Car Wallet</h1>
       </div>
 
       <div class="topbar-actions">
@@ -50,7 +50,7 @@
           </div>
         </div>
 
-        <p class="install-hint"></p>
+        <p class="install-hint">iPhone：Safari 開啟後 → 分享 → 加入主畫面</p>
       </section>
 
       <section class="toolbar-card">
@@ -61,17 +61,21 @@
           placeholder="搜尋名稱、品牌、備註"
         >
 
-      <select id="statusFilter" class="filter-select">
-        <option value="">全部狀態</option>
-        <option value="全新">全新</option>
-        <option value="拆檢">拆檢</option>
-       <option value="無盒">無盒</option>
-    <option value="已出售">已出售</option>
-    </select>
+        <select id="statusFilter" class="filter-select">
+          <option value="">全部狀態</option>
+          <option value="全新未拆">全新未拆</option>
+          <option value="已拆未展示">已拆未展示</option>
+          <option value="展示中">展示中</option>
+          <option value="盒損">盒損</option>
+          <option value="缺件">缺件</option>
+          <option value="已出售">已出售</option>
+        </select>
+      </section>
 
       <section class="section-block">
         <div class="section-header">
           <h3>模型列表</h3>
+          <button class="text-button" id="toggleEditBtn" type="button">編輯</button>
         </div>
 
         <div id="itemList" class="item-list"></div>
@@ -111,11 +115,13 @@
 
         <label class="form-label" for="statusInput">狀態</label>
         <select id="statusInput" class="form-input">
-            <option value="">請選擇</option>
-            <option value="全新">全新</option>
-            <option value="拆檢">拆檢</option>
-            <option value="無盒">無盒</option>
-            <option value="已出售">已出售</option>
+          <option value="">請選擇</option>
+          <option value="全新未拆">全新未拆</option>
+          <option value="已拆未展示">已拆未展示</option>
+          <option value="展示中">展示中</option>
+          <option value="盒損">盒損</option>
+          <option value="缺件">缺件</option>
+          <option value="已出售">已出售</option>
         </select>
 
         <label class="form-label" for="notesInput">備註</label>
@@ -139,19 +145,6 @@
         <button class="close-button" data-close="detail" type="button">✕</button>
       </div>
       <div id="detailContent"></div>
-    </div>
-  </div>
-
-  <!-- 管理頁 -->
-  <div class="modal hidden" id="manageModal">
-    <div class="modal-backdrop" data-close="manage"></div>
-    <div class="modal-panel">
-      <div class="modal-header">
-        <h3>管理模型</h3>
-        <button class="close-button" data-close="manage" type="button">✕</button>
-      </div>
-
-      <div id="manageContent"></div>
     </div>
   </div>
 
