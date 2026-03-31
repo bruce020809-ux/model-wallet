@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Car Wallet</title>
+
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#111827">
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Car Wallet">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar safe-top">
+      <div>
+        <p class="topbar-subtitle">我的模型帳本</p>
+        <h1 class="topbar-title">Model Wallet</h1>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="icon-button" id="settingsBtn" type="button" aria-label="設定">⚙</button>
+        <button class="icon-button" id="addBtn" type="button" aria-label="新增">＋</button>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <section class="summary-card clickable-card" id="summaryCard">
+        <p class="summary-label">收藏總覽</p>
+        <h2 class="summary-title">模型記錄</h2>
+
+        <div class="summary-grid">
+          <div class="summary-item">
+            <p class="summary-item-label">收藏總數</p>
+            <p class="summary-item-value" id="totalCount">0</p>
+          </div>
+          <div class="summary-item">
+            <p class="summary-item-label">總花費</p>
+            <p class="summary-item-value" id="totalSpent">$0</p>
+          </div>
+          <div class="summary-item">
+            <p class="summary-item-label">本月新增</p>
+            <p class="summary-item-value" id="monthCount">0</p>
+          </div>
+        </div>
+
+        <p class="install-hint"></p>
+      </section>
+
+      <section class="toolbar-card">
+        <input
+          id="searchInput"
+          class="search-input"
+          type="text"
+          placeholder="搜尋名稱、品牌、備註"
+        >
+
+      <select id="statusFilter" class="filter-select">
+        <option value="">全部狀態</option>
+        <option value="全新">全新</option>
+        <option value="拆檢">拆檢</option>
+       <option value="無盒">無盒</option>
+    <option value="已出售">已出售</option>
+    </select>
+
+      <section class="section-block">
+        <div class="section-header">
+          <h3>模型列表</h3>
+        </div>
+
+        <div id="itemList" class="item-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 新增 / 編輯 -->
+  <div class="modal hidden" id="editorModal">
+    <div class="modal-backdrop" data-close="editor"></div>
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h3 id="editorTitle">新增模型</h3>
+        <button class="close-button" data-close="editor" type="button">✕</button>
+      </div>
+
+      <form id="itemForm" class="form-grid">
+        <input type="hidden" id="itemId">
+
+        <label class="form-label" for="nameInput">模型名稱 *</label>
+        <input id="nameInput" class="form-input" type="text" required>
+
+        <label class="form-label" for="brandInput">品牌</label>
+        <input id="brandInput" class="form-input" type="text" placeholder="Tomica / TLV / Mini GT">
+
+        <label class="form-label" for="seriesInput">系列</label>
+        <input id="seriesInput" class="form-input" type="text" placeholder="Premium / Limited Vintage Neo">
+
+        <label class="form-label" for="priceInput">價格</label>
+        <input id="priceInput" class="form-input" type="number" min="0" value="0">
+
+        <label class="form-label" for="dateInput">購買日期</label>
+        <input id="dateInput" class="form-input" type="date">
+
+        <label class="form-label" for="placeInput">購買地點</label>
+        <input id="placeInput" class="form-input" type="text" placeholder="地下街 / 蝦皮 / 日本帶回">
+
+        <label class="form-label" for="statusInput">狀態</label>
+        <select id="statusInput" class="form-input">
+            <option value="">請選擇</option>
+            <option value="全新">全新</option>
+            <option value="拆檢">拆檢</option>
+            <option value="無盒">無盒</option>
+            <option value="已出售">已出售</option>
+        </select>
+
+        <label class="form-label" for="notesInput">備註</label>
+        <textarea id="notesInput" class="form-textarea" rows="4" placeholder="可記錄版本、盒況、改裝內容"></textarea>
+
+        <label class="form-label" for="imageInput">封面照片</label>
+        <input id="imageInput" class="form-input" type="file" accept="image/*">
+        <div id="imagePreview" class="image-preview-grid"></div>
+
+        <button type="submit" class="primary-btn">儲存模型</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 詳情 -->
+  <div class="modal hidden" id="detailModal">
+    <div class="modal-backdrop" data-close="detail"></div>
+    <div class="modal-panel detail-modal-panel">
+      <div class="modal-header">
+        <h3>模型詳情</h3>
+        <button class="close-button" data-close="detail" type="button">✕</button>
+      </div>
+      <div id="detailContent"></div>
+    </div>
+  </div>
+
+  <!-- 管理頁 -->
+  <div class="modal hidden" id="manageModal">
+    <div class="modal-backdrop" data-close="manage"></div>
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h3>管理模型</h3>
+        <button class="close-button" data-close="manage" type="button">✕</button>
+      </div>
+
+      <div id="manageContent"></div>
+    </div>
+  </div>
+
+  <!-- 統計 -->
+  <div class="modal hidden" id="statsModal">
+    <div class="modal-backdrop" data-close="stats"></div>
+    <div class="modal-panel detail-modal-panel" id="statsModalPanel">
+      <div class="modal-header">
+        <h3>統計分析</h3>
+        <button class="close-button" data-close="stats" type="button">✕</button>
+      </div>
+
+      <div class="stats-section">
+        <h4 class="stats-title">各品牌佔比</h4>
+        <canvas id="brandChart"></canvas>
+      </div>
+
+      <div class="stats-section">
+        <h4 class="stats-title">每月花費</h4>
+        <canvas id="monthChart"></canvas>
+      </div>
+
+      <div class="stats-section">
+        <h4 class="stats-title">各品牌花費</h4>
+        <div id="brandSpendList" class="stats-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 設定 -->
+  <div class="modal hidden" id="settingsModal">
+    <div class="modal-backdrop" data-close="settings"></div>
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h3>設定</h3>
+        <button class="close-button" data-close="settings" type="button">✕</button>
+      </div>
+
+      <div class="form-grid">
+        <label class="form-label" for="themeBgInput">頁面底色</label>
+        <input id="themeBgInput" class="form-input color-input" type="color" value="#0b1020">
+
+        <label class="form-label" for="themePanelInput">卡片底色</label>
+        <input id="themePanelInput" class="form-input color-input" type="color" value="#121a2b">
+
+        <label class="form-label" for="themePanel2Input">次要區塊色</label>
+        <input id="themePanel2Input" class="form-input color-input" type="color" value="#1a2438">
+
+        <label class="form-label" for="themeTextInput">主要文字色</label>
+        <input id="themeTextInput" class="form-input color-input" type="color" value="#f3f4f6">
+
+        <label class="form-label" for="themeMutedInput">次要文字色</label>
+        <input id="themeMutedInput" class="form-input color-input" type="color" value="#94a3b8">
+
+        <label class="form-label" for="themeAccentInput">主色</label>
+        <input id="themeAccentInput" class="form-input color-input" type="color" value="#8b5cf6">
+
+        <label class="form-label" for="themeAccentTextInput">主色文字</label>
+        <input id="themeAccentTextInput" class="form-input color-input" type="color" value="#ffffff">
+
+        <label class="form-label" for="themeDangerInput">危險按鈕色</label>
+        <input id="themeDangerInput" class="form-input color-input" type="color" value="#ef4444">
+
+        <button id="settingsExportBtn" class="primary-btn" type="button">匯出備份</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="storage.js"></script>
+  <script src="ui.js"></script>
+  <script src="stats.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
