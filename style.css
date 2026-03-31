@@ -23,6 +23,8 @@ html,
 body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  overflow-x: hidden;
   background: var(--bg);
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
@@ -38,6 +40,13 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+input,
+select,
+textarea {
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 img {
@@ -60,6 +69,7 @@ canvas {
   margin: 0 auto;
   min-height: 100vh;
   padding-bottom: 24px;
+  overflow-x: hidden;
 }
 
 .safe-top {
@@ -205,6 +215,7 @@ canvas {
 .form-input,
 .form-textarea {
   width: 100%;
+  max-width: 100%;
   background: var(--panel-2);
   color: var(--text);
   border: 1px solid var(--line);
@@ -215,6 +226,11 @@ canvas {
 
 .search-input {
   margin-bottom: 10px;
+}
+
+.form-input[type="date"] {
+  min-height: 52px;
+  line-height: 1.2;
 }
 
 .form-input:focus,
@@ -379,11 +395,12 @@ canvas {
   left: 50%;
   transform: translateX(-50%);
   bottom: 0;
-  width: 100%;
+  width: calc(100% - 16px);
   max-width: 480px;
   max-height: 88vh;
   border-radius: 24px 24px 0 0;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: 16px;
 }
 
@@ -413,6 +430,7 @@ canvas {
 
 .form-grid {
   display: grid;
+  width: 100%;
 }
 
 .form-label {

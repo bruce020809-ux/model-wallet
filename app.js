@@ -24,8 +24,17 @@
 
   function refreshList() {
     UI.renderSummary(state.items);
-    UI.renderItemList(state.items, state.searchKeyword, state.statusFilter, state.isEditMode);
-    document.getElementById("toggleEditBtn").textContent = state.isEditMode ? "完成" : "編輯";
+    UI.renderItemList(
+      state.items,
+      state.searchKeyword,
+      state.statusFilter,
+      state.isEditMode
+    );
+
+    const toggleBtn = document.getElementById("toggleEditBtn");
+    if (toggleBtn) {
+      toggleBtn.textContent = state.isEditMode ? "完成" : "編輯";
+    }
   }
 
   function findItem(id) {

@@ -31,7 +31,7 @@ window.UI = (() => {
     document.getElementById("monthCount").textContent = monthCount;
   }
 
-  function renderItemList(items, keyword = "", status = "") {
+  function renderItemList(items, keyword = "", status = "", isEditMode = false) {
     const itemList = document.getElementById("itemList");
 
     const filtered = items.filter(item => {
@@ -66,6 +66,14 @@ window.UI = (() => {
 
     itemList.innerHTML = sorted.map(item => {
       const cover = item.image || "";
+      const actionHtml = isEditMode
+        ? `
+          <div class="item-action-row">
+            <button class="secondary-btn" type="button" data-action="edit" data-id="${item.id}">編輯</button>
+            <button class="danger-btn" type="button" data-action="delete" data-id="${item.id}">刪除</button>
+          </div>
+        `
+        : "";
 
       return `
         <article class="item-card">
@@ -95,10 +103,7 @@ window.UI = (() => {
 
             <p class="item-note">${escapeHtml(item.purchasePlace || "未填購買地點")}</p>
 
-            <div class="item-action-row">
-              <button class="secondary-btn" type="button" data-action="detail" data-id="${item.id}">查看</button>
-              <button class="secondary-btn" type="button" data-action="manage" data-id="${item.id}">編輯</button>
-            </div>
+            ${actionHtml}
           </div>
         </article>
       `;
@@ -147,22 +152,6 @@ window.UI = (() => {
       <div class="notes-card">
         <h4>備註</h4>
         <p>${escapeHtml(item.notes || "目前沒有備註")}</p>
-      </div>
-    `;
-  }
-
-  function renderManage(item) {
-    const manageContent = document.getElementById("manageContent");
-    manageContent.innerHTML = `
-      <div class="detail-info-list" style="margin-bottom: 16px;">
-        <div class="detail-row"><span class="detail-label">模型名稱</span><span class="detail-value">${escapeHtml(item.name)}</span></div>
-        <div class="detail-row"><span class="detail-label">品牌</span><span class="detail-value">${escapeHtml(item.brand || "未填寫")}</span></div>
-        <div class="detail-row"><span class="detail-label">價格</span><span class="detail-value">${formatCurrency(item.price)}</span></div>
-      </div>
-
-      <div class="item-action-row">
-        <button class="secondary-btn" id="manageEditBtn" type="button">編輯資料</button>
-        <button class="danger-btn" id="manageDeleteBtn" type="button">刪除模型</button>
       </div>
     `;
   }
@@ -237,7 +226,6 @@ window.UI = (() => {
     renderItemList,
     renderImagePreview,
     renderDetail,
-    renderManage,
     setEditorMode,
     fillForm,
     resetForm,
