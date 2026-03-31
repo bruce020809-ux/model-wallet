@@ -12,14 +12,51 @@
     return crypto.randomUUID();
   }
 
+  function getModalPanel(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return null;
+    return modal.querySelector(".modal-panel");
+  }
+
+  function scrollModalToTop(id) {
+    const panel = getModalPanel(id);
+    if (panel) {
+      panel.scrollTop = 0;
+    }
+  }
+
+  function resetEditorState() {
+    state.editingId = null;
+    state.tempImage = "";
+    UI.setEditorMode(false);
+    UI.resetForm();
+    scrollModalToTop("editorModal");
+  }
+
   function openModal(id) {
-    document.getElementById(id).classList.remove("hidden");
+    const modal = document.getElementById(id);
+    if (!modal) return;
+
+    modal.classList.remove("hidden");
     document.body.style.overflow = "hidden";
+
+    requestAnimationFrame(() => {
+      scrollModalToTop(id);
+    });
   }
 
   function closeModal(id) {
-    document.getElementById(id).classList.add("hidden");
+    const modal = document.getElementById(id);
+    if (!modal) return;
+
+    modal.classList.add("hidden");
     document.body.style.overflow = "";
+
+    if (id === "editorModal") {
+      resetEditorState();
+    } else {
+      scrollModalToTop(id);
+    }
   }
 
   function refreshList() {
@@ -47,10 +84,7 @@
   }
 
   function startCreate() {
-    state.editingId = null;
-    state.tempImage = "";
-    UI.setEditorMode(false);
-    UI.resetForm();
+    resetEditorState();
     openModal("editorModal");
   }
 
@@ -114,9 +148,6 @@
 
     saveState();
     closeModal("editorModal");
-    UI.resetForm();
-    state.editingId = null;
-    state.tempImage = "";
   }
 
   function handleImageChange(event) {
