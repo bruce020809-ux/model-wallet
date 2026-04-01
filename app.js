@@ -1,10 +1,11 @@
 (() => {
   const state = {
-    items: StorageManager.getItems(),
+    items: [],
     editingId: null,
     searchKeyword: "",
     statusFilter: "",
     tempImage: "",
+    tempFile: null,
     isEditMode: false
   };
 
@@ -20,14 +21,13 @@
 
   function scrollModalToTop(id) {
     const panel = getModalPanel(id);
-    if (panel) {
-      panel.scrollTop = 0;
-    }
+    if (panel) panel.scrollTop = 0;
   }
 
   function resetEditorState() {
     state.editingId = null;
     state.tempImage = "";
+    state.tempFile = null;
     UI.setEditorMode(false);
     UI.resetForm();
     scrollModalToTop("editorModal");
@@ -36,19 +36,14 @@
   function openModal(id) {
     const modal = document.getElementById(id);
     if (!modal) return;
-
     modal.classList.remove("hidden");
     document.body.style.overflow = "hidden";
-
-    requestAnimationFrame(() => {
-      scrollModalToTop(id);
-    });
+    requestAnimationFrame(() => scrollModalToTop(id));
   }
 
   function closeModal(id) {
     const modal = document.getElementById(id);
     if (!modal) return;
-
     modal.classList.add("hidden");
     document.body.style.overflow = "";
 
@@ -78,8 +73,8 @@
     return state.items.find(item => item.id === id);
   }
 
-  function saveState() {
-    StorageManager.saveItems(state.items);
+  async function reloadItems() {
+    state.items = await StorageManager.getItems();
     refreshList();
   }
 
@@ -94,6 +89,7 @@
 
     state.editingId = id;
     state.tempImage = item.image || "";
+    state.tempFile = null;
     UI.setEditorMode(true);
     UI.fillForm(item);
     openModal("editorModal");
@@ -107,15 +103,20 @@
     openModal("detailModal");
   }
 
-  function removeItem(id) {
+  async function removeItem(id) {
     const ok = confirm("確定要刪除這筆模型資料嗎？");
     if (!ok) return;
 
-    state.items = state.items.filter(item => item.id !== id);
-    saveState();
+    try {
+      await StorageManager.deleteItem(id);
+      await reloadItems();
+    } catch (error) {
+      console.error(error);
+      alert("刪除失敗");
+    }
   }
 
-  function submitForm(event) {
+  async function submitForm(event) {
     event.preventDefault();
 
     const name = document.getElementById("nameInput").value.trim();
@@ -125,40 +126,49 @@
     }
 
     const existing = state.items.find(item => item.id === state.editingId);
+    let imageUrl = state.tempImage || "";
 
-    const payload = {
-      id: state.editingId || generateId(),
-      name,
-      brand: document.getElementById("brandInput").value.trim(),
-      series: document.getElementById("seriesInput").value.trim(),
-      price: Number(document.getElementById("priceInput").value || 0),
-      purchaseDate: document.getElementById("dateInput").value,
-      purchasePlace: document.getElementById("placeInput").value.trim(),
-      status: document.getElementById("statusInput").value,
-      notes: document.getElementById("notesInput").value.trim(),
-      image: state.tempImage,
-      createdAt: state.editingId ? (existing?.createdAt || Date.now()) : Date.now()
-    };
+    try {
+      if (state.tempFile) {
+        const fileName = `${state.editingId || generateId()}-${Date.now()}.jpg`;
+        imageUrl = await StorageManager.uploadImage(state.tempFile, fileName);
+      }
 
-    if (state.editingId) {
-      state.items = state.items.map(item => item.id === state.editingId ? payload : item);
-    } else {
-      state.items.unshift(payload);
+      const payload = {
+        id: state.editingId || generateId(),
+        name,
+        brand: document.getElementById("brandInput").value.trim(),
+        series: document.getElementById("seriesInput").value.trim(),
+        price: Number(document.getElementById("priceInput").value || 0),
+        purchaseDate: document.getElementById("dateInput").value,
+        purchasePlace: document.getElementById("placeInput").value.trim(),
+        status: document.getElementById("statusInput").value,
+        notes: document.getElementById("notesInput").value.trim(),
+        image: imageUrl,
+        createdAt: state.editingId ? (existing?.createdAt || Date.now()) : Date.now()
+      };
+
+      await StorageManager.saveItem(payload);
+      await reloadItems();
+      closeModal("editorModal");
+    } catch (error) {
+      console.error(error);
+      alert("儲存失敗，請檢查 Supabase policy / bucket 設定。");
     }
-
-    saveState();
-    closeModal("editorModal");
   }
 
   function handleImageChange(event) {
     const file = event.target.files[0];
     if (!file) {
+      state.tempFile = null;
       state.tempImage = "";
       UI.renderImagePreview("");
       return;
     }
 
     if (!file.type.startsWith("image/")) return;
+
+    state.tempFile = file;
 
     const reader = new FileReader();
     reader.onload = e => {
@@ -321,10 +331,10 @@
     });
   }
 
-  function init() {
+  async function init() {
     applySavedTheme();
     bindEvents();
-    refreshList();
+    await reloadItems();
     registerServiceWorker();
   }
 

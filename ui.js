@@ -60,7 +60,7 @@ window.UI = (() => {
     const sorted = [...filtered].sort((a, b) => {
       const dateA = a.purchaseDate || "";
       const dateB = b.purchaseDate || "";
-      if (dateA === dateB) return b.createdAt - a.createdAt;
+      if (dateA === dateB) return (b.createdAt || 0) - (a.createdAt || 0);
       return dateB.localeCompare(dateA);
     });
 
@@ -201,23 +201,21 @@ window.UI = (() => {
     root.style.setProperty("--accent-text", finalTheme.accentText);
     root.style.setProperty("--danger", finalTheme.danger);
 
-    const bgInput = document.getElementById("themeBgInput");
-    const panelInput = document.getElementById("themePanelInput");
-    const panel2Input = document.getElementById("themePanel2Input");
-    const textInput = document.getElementById("themeTextInput");
-    const mutedInput = document.getElementById("themeMutedInput");
-    const accentInput = document.getElementById("themeAccentInput");
-    const accentTextInput = document.getElementById("themeAccentTextInput");
-    const dangerInput = document.getElementById("themeDangerInput");
+    const map = {
+      themeBgInput: finalTheme.bg,
+      themePanelInput: finalTheme.panel,
+      themePanel2Input: finalTheme.panel2,
+      themeTextInput: finalTheme.text,
+      themeMutedInput: finalTheme.muted,
+      themeAccentInput: finalTheme.accent,
+      themeAccentTextInput: finalTheme.accentText,
+      themeDangerInput: finalTheme.danger
+    };
 
-    if (bgInput) bgInput.value = finalTheme.bg;
-    if (panelInput) panelInput.value = finalTheme.panel;
-    if (panel2Input) panel2Input.value = finalTheme.panel2;
-    if (textInput) textInput.value = finalTheme.text;
-    if (mutedInput) mutedInput.value = finalTheme.muted;
-    if (accentInput) accentInput.value = finalTheme.accent;
-    if (accentTextInput) accentTextInput.value = finalTheme.accentText;
-    if (dangerInput) dangerInput.value = finalTheme.danger;
+    Object.entries(map).forEach(([id, value]) => {
+      const input = document.getElementById(id);
+      if (input) input.value = value;
+    });
   }
 
   return {

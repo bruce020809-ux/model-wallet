@@ -7,7 +7,6 @@ window.Stats = (() => {
       brandChart.destroy();
       brandChart = null;
     }
-
     if (monthChart) {
       monthChart.destroy();
       monthChart = null;
@@ -41,6 +40,8 @@ window.Stats = (() => {
 
   function renderBrandChart(brandMap) {
     const canvas = document.getElementById("brandChart");
+    if (!canvas) return;
+
     const labels = Object.keys(brandMap);
     const data = Object.values(brandMap);
 
@@ -62,9 +63,7 @@ window.Stats = (() => {
         responsive: true,
         plugins: {
           legend: {
-            labels: {
-              color: "#f3f4f6"
-            }
+            labels: { color: "#f3f4f6" }
           }
         }
       }
@@ -73,6 +72,8 @@ window.Stats = (() => {
 
   function renderMonthChart(monthMap) {
     const canvas = document.getElementById("monthChart");
+    if (!canvas) return;
+
     const labels = Object.keys(monthMap).sort();
     const data = labels.map(label => monthMap[label]);
 
@@ -116,6 +117,8 @@ window.Stats = (() => {
 
   function renderBrandSpendList(brandSpendMap) {
     const container = document.getElementById("brandSpendList");
+    if (!container) return;
+
     const entries = Object.entries(brandSpendMap).sort((a, b) => b[1] - a[1]);
 
     if (!entries.length) {

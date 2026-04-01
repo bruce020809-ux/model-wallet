@@ -21,7 +21,7 @@
     <header class="topbar safe-top">
       <div>
         <p class="topbar-subtitle">我的模型帳本</p>
-        <h1 class="topbar-title">Model Wallet</h1>
+        <h1 class="topbar-title">Car Wallet</h1>
       </div>
 
       <div class="topbar-actions">
@@ -49,6 +49,8 @@
             <p class="summary-item-value" id="monthCount">0</p>
           </div>
         </div>
+
+        <p class="install-hint">iPhone：Safari 開啟後 → 分享 → 加入主畫面</p>
       </section>
 
       <section class="toolbar-card">
@@ -199,11 +201,16 @@
         <label class="form-label" for="themeAccentTextInput">主色文字</label>
         <input id="themeAccentTextInput" class="form-input color-input" type="color" value="#ffffff">
 
+        <label class="form-label" for="themeDangerInput">危險按鈕色</label>
+        <input id="themeDangerInput" class="form-input color-input" type="color" value="#ef4444">
+
         <button id="settingsExportBtn" class="primary-btn" type="button">匯出備份</button>
       </div>
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
   <script src="storage.js"></script>
   <script src="ui.js"></script>
   <script src="stats.js"></script>

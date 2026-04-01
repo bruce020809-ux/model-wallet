@@ -1,12 +1,13 @@
-const CACHE_NAME = "car-wallet-cache-v4";
+const CACHE_NAME = "car-wallet-cache-v6";
 const URLS_TO_CACHE = [
   "./",
   "./index.html",
   "./style.css",
   "./app.js",
-  "./storage.js",
   "./ui.js",
+  "./storage.js",
   "./stats.js",
+  "./supabase.js",
   "./manifest.json"
 ];
 
