@@ -36,14 +36,19 @@
   function openModal(id) {
     const modal = document.getElementById(id);
     if (!modal) return;
+
     modal.classList.remove("hidden");
     document.body.style.overflow = "hidden";
-    requestAnimationFrame(() => scrollModalToTop(id));
+
+    requestAnimationFrame(() => {
+      scrollModalToTop(id);
+    });
   }
 
   function closeModal(id) {
     const modal = document.getElementById(id);
     if (!modal) return;
+
     modal.classList.add("hidden");
     document.body.style.overflow = "";
 
@@ -112,7 +117,7 @@
       await reloadItems();
     } catch (error) {
       console.error(error);
-      alert("刪除失敗");
+      alert(`刪除失敗：${error?.message || error}`);
     }
   }
 
@@ -130,8 +135,7 @@
 
     try {
       if (state.tempFile) {
-        const fileName = `${state.editingId || generateId()}-${Date.now()}.jpg`;
-        imageUrl = await StorageManager.uploadImage(state.tempFile, fileName);
+        imageUrl = await StorageManager.uploadImage(state.tempFile);
       }
 
       const payload = {
@@ -153,7 +157,7 @@
       closeModal("editorModal");
     } catch (error) {
       console.error(error);
-      alert("儲存失敗，請檢查 Supabase policy / bucket 設定。");
+      alert(`儲存失敗：${error?.message || error}`);
     }
   }
 

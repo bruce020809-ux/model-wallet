@@ -13,14 +13,14 @@ window.StorageManager = (() => {
     return (data || []).map(row => ({
       id: row.id,
       name: row.name,
-      brand: row.brand,
-      series: row.series,
-      price: row.price,
-      purchaseDate: row.purchase_date,
-      purchasePlace: row.purchase_place,
-      status: row.status,
-      notes: row.notes,
-      image: row.image_url,
+      brand: row.brand || "",
+      series: row.series || "",
+      price: row.price || 0,
+      purchaseDate: row.purchase_date || "",
+      purchasePlace: row.purchase_place || "",
+      status: row.status || "",
+      notes: row.notes || "",
+      image: row.image_url || "",
       createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now()
     }));
   }
@@ -61,16 +61,27 @@ window.StorageManager = (() => {
     }
   }
 
-  async function uploadImage(file, fileName) {
-    const path = `covers/${fileName}`;
+  async function uploadImage(file) {
+    if (!file) {
+      throw new Error("沒有可上傳的圖片檔案");
+    }
+
+    const originalName = file.name || "image.jpg";
+    const ext = originalName.includes(".")
+      ? originalName.split(".").pop().toLowerCase()
+      : "jpg";
+
+    const safeExt = ext || "jpg";
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${safeExt}`;
+    const filePath = `cars/${fileName}`;
 
     const { error: uploadError } = await window.supabaseClient
       .storage
-      .from(window.SUPABASE_CONFIG.bucket)
-      .upload(path, file, {
+      .from("car-images")
+      .upload(filePath, file, {
         cacheControl: "3600",
-        upsert: true,
-        contentType: file.type
+        upsert: false,
+        contentType: file.type || "image/jpeg"
       });
 
     if (uploadError) {
@@ -78,12 +89,16 @@ window.StorageManager = (() => {
       throw uploadError;
     }
 
-    const { data } = window.supabaseClient
+    const { data: publicData } = window.supabaseClient
       .storage
-      .from(window.SUPABASE_CONFIG.bucket)
-      .getPublicUrl(path);
+      .from("car-images")
+      .getPublicUrl(filePath);
 
-    return data.publicUrl;
+    if (!publicData?.publicUrl) {
+      throw new Error("取得圖片公開網址失敗");
+    }
+
+    return publicData.publicUrl;
   }
 
   function exportItems(items) {
@@ -106,7 +121,8 @@ window.StorageManager = (() => {
   function getTheme() {
     try {
       return JSON.parse(localStorage.getItem("car-wallet-theme-v2") || "null");
-    } catch {
+    } catch (error) {
+      console.error("讀取 theme 失敗:", error);
       return null;
     }
   }
