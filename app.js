@@ -6,7 +6,8 @@
     statusFilter: "",
     tempImage: "",
     tempFile: null,
-    isEditMode: false
+    isEditMode: false,
+    isSubmitting: false
   };
 
   function generateId() {
@@ -24,12 +25,24 @@
     if (panel) panel.scrollTop = 0;
   }
 
+  function setSubmitButtonLoading(isLoading) {
+    const submitBtn = document.querySelector("#itemForm button[type='submit']");
+    if (!submitBtn) return;
+
+    submitBtn.disabled = isLoading;
+    submitBtn.textContent = isLoading ? "儲存中..." : "儲存模型";
+    submitBtn.style.opacity = isLoading ? "0.7" : "1";
+    submitBtn.style.pointerEvents = isLoading ? "none" : "auto";
+  }
+
   function resetEditorState() {
     state.editingId = null;
     state.tempImage = "";
     state.tempFile = null;
+    state.isSubmitting = false;
     UI.setEditorMode(false);
     UI.resetForm();
+    setSubmitButtonLoading(false);
     scrollModalToTop("editorModal");
   }
 
@@ -95,8 +108,10 @@
     state.editingId = id;
     state.tempImage = item.image || "";
     state.tempFile = null;
+    state.isSubmitting = false;
     UI.setEditorMode(true);
     UI.fillForm(item);
+    setSubmitButtonLoading(false);
     openModal("editorModal");
   }
 
@@ -124,11 +139,18 @@
   async function submitForm(event) {
     event.preventDefault();
 
+    if (state.isSubmitting) {
+      return;
+    }
+
     const name = document.getElementById("nameInput").value.trim();
     if (!name) {
       alert("模型名稱不能空白");
       return;
     }
+
+    state.isSubmitting = true;
+    setSubmitButtonLoading(true);
 
     const existing = state.items.find(item => item.id === state.editingId);
     let imageUrl = state.tempImage || "";
@@ -158,6 +180,8 @@
     } catch (error) {
       console.error(error);
       alert(`儲存失敗：${error?.message || error}`);
+      state.isSubmitting = false;
+      setSubmitButtonLoading(false);
     }
   }
 
@@ -220,6 +244,10 @@
     document.addEventListener("click", event => {
       const closeType = event.target.dataset.close;
       if (!closeType) return;
+
+      if (state.isSubmitting && closeType === "editor") {
+        return;
+      }
 
       if (closeType === "editor") closeModal("editorModal");
       if (closeType === "detail") closeModal("detailModal");
