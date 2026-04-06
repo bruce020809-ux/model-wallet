@@ -17,7 +17,26 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <div class="app-shell">
+  <!-- 登入頁 -->
+  <div id="loginPage" class="auth-shell">
+    <div class="auth-card">
+      <h1 class="auth-title">Car Wallet</h1>
+      <p class="auth-subtitle">請先登入你的收藏帳本</p>
+
+      <input id="emailInput" class="form-input" type="email" placeholder="Email">
+      <input id="passwordInput" class="form-input" type="password" placeholder="Password">
+
+      <div class="auth-actions">
+        <button id="loginBtn" class="primary-btn" type="button">登入</button>
+        <button id="signupBtn" class="secondary-btn auth-secondary" type="button">註冊</button>
+      </div>
+
+      <p id="authMessage" class="auth-message"></p>
+    </div>
+  </div>
+
+  <!-- App -->
+  <div id="appRoot" class="app-shell hidden">
     <header class="topbar safe-top">
       <div>
         <p class="topbar-subtitle">我的模型帳本</p>
@@ -50,6 +69,7 @@
           </div>
         </div>
 
+        <p class="install-hint">iPhone：Safari 開啟後 → 分享 → 加入主畫面</p>
       </section>
 
       <section class="toolbar-card">
@@ -204,6 +224,7 @@
         <input id="themeDangerInput" class="form-input color-input" type="color" value="#ef4444">
 
         <button id="settingsExportBtn" class="primary-btn" type="button">匯出備份</button>
+        <button id="logoutBtn" class="secondary-btn auth-secondary" type="button">登出</button>
       </div>
     </div>
   </div>

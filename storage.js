@@ -1,8 +1,26 @@
 window.StorageManager = (() => {
+  async function getCurrentUser() {
+    const {
+      data: { user },
+      error
+    } = await window.supabaseClient.auth.getUser();
+
+    if (error) {
+      console.error("取得使用者失敗:", error);
+      throw error;
+    }
+
+    return user;
+  }
+
   async function getItems() {
+    const user = await getCurrentUser();
+    if (!user) return [];
+
     const { data, error } = await window.supabaseClient
       .from("cars")
       .select("*")
+      .eq("owner_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -26,8 +44,12 @@ window.StorageManager = (() => {
   }
 
   async function saveItem(item) {
+    const user = await getCurrentUser();
+    if (!user) throw new Error("尚未登入");
+
     const payload = {
       id: item.id,
+      owner_id: user.id,
       name: item.name,
       brand: item.brand,
       series: item.series,
@@ -50,10 +72,14 @@ window.StorageManager = (() => {
   }
 
   async function deleteItem(id) {
+    const user = await getCurrentUser();
+    if (!user) throw new Error("尚未登入");
+
     const { error } = await window.supabaseClient
       .from("cars")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .eq("owner_id", user.id);
 
     if (error) {
       console.error("刪除 car 失敗:", error);
@@ -66,19 +92,20 @@ window.StorageManager = (() => {
       throw new Error("沒有可上傳的圖片檔案");
     }
 
+    const user = await getCurrentUser();
+    if (!user) throw new Error("尚未登入");
+
     const originalName = file.name || "image.jpg";
     const ext = originalName.includes(".")
       ? originalName.split(".").pop().toLowerCase()
       : "jpg";
 
-    const safeExt = ext || "jpg";
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${safeExt}`;
-    const filePath = `cars/${fileName}`;
+    const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext || "jpg"}`;
 
     const { error: uploadError } = await window.supabaseClient
       .storage
-      .from("car-images")
-      .upload(filePath, file, {
+      .from(window.SUPABASE_CONFIG.bucket)
+      .upload(fileName, file, {
         cacheControl: "3600",
         upsert: false,
         contentType: file.type || "image/jpeg"
@@ -89,16 +116,16 @@ window.StorageManager = (() => {
       throw uploadError;
     }
 
-    const { data: publicData } = window.supabaseClient
+    const { data } = window.supabaseClient
       .storage
-      .from("car-images")
-      .getPublicUrl(filePath);
+      .from(window.SUPABASE_CONFIG.bucket)
+      .getPublicUrl(fileName);
 
-    if (!publicData?.publicUrl) {
+    if (!data?.publicUrl) {
       throw new Error("取得圖片公開網址失敗");
     }
 
-    return publicData.publicUrl;
+    return data.publicUrl;
   }
 
   function exportItems(items) {
@@ -115,12 +142,12 @@ window.StorageManager = (() => {
   }
 
   function saveTheme(themeObject) {
-    localStorage.setItem("car-wallet-theme-v2", JSON.stringify(themeObject));
+    localStorage.setItem("car-wallet-theme-v3", JSON.stringify(themeObject));
   }
 
   function getTheme() {
     try {
-      return JSON.parse(localStorage.getItem("car-wallet-theme-v2") || "null");
+      return JSON.parse(localStorage.getItem("car-wallet-theme-v3") || "null");
     } catch (error) {
       console.error("讀取 theme 失敗:", error);
       return null;
@@ -128,6 +155,7 @@ window.StorageManager = (() => {
   }
 
   return {
+    getCurrentUser,
     getItems,
     saveItem,
     deleteItem,

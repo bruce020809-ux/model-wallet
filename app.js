@@ -7,7 +7,8 @@
     tempImage: "",
     tempFile: null,
     isEditMode: false,
-    isSubmitting: false
+    isSubmitting: false,
+    currentUser: null
   };
 
   function generateId() {
@@ -33,6 +34,23 @@
     submitBtn.textContent = isLoading ? "儲存中..." : "儲存模型";
     submitBtn.style.opacity = isLoading ? "0.7" : "1";
     submitBtn.style.pointerEvents = isLoading ? "none" : "auto";
+  }
+
+  function showAuthMessage(message, isError = false) {
+    const el = document.getElementById("authMessage");
+    if (!el) return;
+    el.textContent = message || "";
+    el.style.color = isError ? "#fecaca" : "var(--muted)";
+  }
+
+  function showLoginPage() {
+    document.getElementById("loginPage").classList.remove("hidden");
+    document.getElementById("appRoot").classList.add("hidden");
+  }
+
+  function showAppPage() {
+    document.getElementById("loginPage").classList.add("hidden");
+    document.getElementById("appRoot").classList.remove("hidden");
   }
 
   function resetEditorState() {
@@ -139,9 +157,7 @@
   async function submitForm(event) {
     event.preventDefault();
 
-    if (state.isSubmitting) {
-      return;
-    }
+    if (state.isSubmitting) return;
 
     const name = document.getElementById("nameInput").value.trim();
     if (!name) {
@@ -240,14 +256,70 @@
     Stats.render(state.items);
   }
 
+  async function login() {
+    const email = document.getElementById("emailInput").value.trim();
+    const password = document.getElementById("passwordInput").value;
+
+    if (!email || !password) {
+      showAuthMessage("請輸入 Email 與密碼", true);
+      return;
+    }
+
+    const { error } = await window.supabaseClient.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      showAuthMessage(error.message, true);
+      return;
+    }
+
+    showAuthMessage("");
+    await bootstrapAuthedApp();
+  }
+
+  async function signup() {
+    const email = document.getElementById("emailInput").value.trim();
+    const password = document.getElementById("passwordInput").value;
+
+    if (!email || !password) {
+      showAuthMessage("請輸入 Email 與密碼", true);
+      return;
+    }
+
+    const { error } = await window.supabaseClient.auth.signUp({
+      email,
+      password
+    });
+
+    if (error) {
+      showAuthMessage(error.message, true);
+      return;
+    }
+
+    showAuthMessage("註冊成功，若你開啟 Email 驗證，請先去信箱確認。", false);
+  }
+
+  async function logout() {
+    const { error } = await window.supabaseClient.auth.signOut();
+    if (error) {
+      alert(`登出失敗：${error.message}`);
+      return;
+    }
+
+    state.currentUser = null;
+    state.items = [];
+    refreshList();
+    showLoginPage();
+  }
+
   function bindCloseButtons() {
     document.addEventListener("click", event => {
       const closeType = event.target.dataset.close;
       if (!closeType) return;
 
-      if (state.isSubmitting && closeType === "editor") {
-        return;
-      }
+      if (state.isSubmitting && closeType === "editor") return;
 
       if (closeType === "editor") closeModal("editorModal");
       if (closeType === "detail") closeModal("detailModal");
@@ -293,7 +365,7 @@
     refreshList();
   }
 
-  function bindEvents() {
+  function bindAppEvents() {
     document.getElementById("addBtn").addEventListener("click", startCreate);
     document.getElementById("itemForm").addEventListener("submit", submitForm);
     document.getElementById("imageInput").addEventListener("change", handleImageChange);
@@ -332,8 +404,15 @@
       StorageManager.exportItems(state.items);
     });
 
+    document.getElementById("logoutBtn").addEventListener("click", logout);
+
     bindThemeInputs();
     bindCloseButtons();
+  }
+
+  function bindAuthEvents() {
+    document.getElementById("loginBtn").addEventListener("click", login);
+    document.getElementById("signupBtn").addEventListener("click", signup);
   }
 
   function applySavedTheme() {
@@ -363,10 +442,32 @@
     });
   }
 
-  async function init() {
+  async function bootstrapAuthedApp() {
+    state.currentUser = await StorageManager.getCurrentUser();
+
+    if (!state.currentUser) {
+      showLoginPage();
+      return;
+    }
+
+    showAppPage();
     applySavedTheme();
-    bindEvents();
     await reloadItems();
+  }
+
+  async function init() {
+    bindAuthEvents();
+    bindAppEvents();
+    applySavedTheme();
+
+    const user = await StorageManager.getCurrentUser();
+    if (!user) {
+      showLoginPage();
+      registerServiceWorker();
+      return;
+    }
+
+    await bootstrapAuthedApp();
     registerServiceWorker();
   }
 
