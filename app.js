@@ -71,6 +71,21 @@
     showAuthMessage("");
   }
 
+  function isAnyModalOpen() {
+    return [
+      "editorModal",
+      "detailModal",
+      "statsModal",
+      "settingsModal",
+      "profileModal",
+      "passwordModal",
+      "themeModal"
+    ].some(id => {
+      const modal = document.getElementById(id);
+      return modal && !modal.classList.contains("hidden");
+    });
+  }
+
   function resetEditorState() {
     state.editingId = null;
     state.tempImage = "";
@@ -100,26 +115,45 @@
 
     modal.classList.add("hidden");
 
-    if (!["editorModal", "detailModal", "statsModal", "settingsModal", "profileModal", "passwordModal", "themeModal"].some(modalId => !document.getElementById(modalId)?.classList.contains("hidden"))) {
-      document.body.style.overflow = "";
-    }
-
     if (id === "editorModal") {
       resetEditorState();
     } else {
       scrollModalToTop(id);
     }
-  }
 
-  function closeAllModals() {
-    ["editorModal", "detailModal", "statsModal", "settingsModal", "profileModal", "passwordModal", "themeModal"].forEach(closeModalSilently);
-    document.body.style.overflow = "";
+    if (!isAnyModalOpen()) {
+      document.body.style.overflow = "";
+    }
   }
 
   function closeModalSilently(id) {
     const modal = document.getElementById(id);
     if (!modal) return;
     modal.classList.add("hidden");
+  }
+
+  function closeAllModals() {
+    [
+      "editorModal",
+      "detailModal",
+      "statsModal",
+      "settingsModal",
+      "profileModal",
+      "passwordModal",
+      "themeModal"
+    ].forEach(closeModalSilently);
+
+    document.body.style.overflow = "";
+  }
+
+  function switchToChildModal(childId) {
+    closeModalSilently("settingsModal");
+    openModal(childId);
+  }
+
+  function returnToSettings(fromId) {
+    closeModal(fromId);
+    openModal("settingsModal");
   }
 
   function refreshList() {
@@ -301,7 +335,9 @@
 
   async function fillProfileForm() {
     const user = await StorageManager.getCurrentUser();
-    if (!user) return;
+    if (!user) throw new Error("目前沒有登入使用者");
+
+    state.currentUser = user;
 
     const meta = user.user_metadata || {};
     document.getElementById("profileName").value = meta.display_name || "";
@@ -318,6 +354,7 @@
     event.preventDefault();
     if (state.isProfileSubmitting) return;
 
+    const submitBtn = document.querySelector("#profileForm button[type='submit']");
     const name = document.getElementById("profileName").value.trim();
     const gender = document.getElementById("profileGender").value;
     const email = document.getElementById("profileEmail").value.trim();
@@ -328,18 +365,26 @@
     }
 
     state.isProfileSubmitting = true;
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "儲存中...";
+    }
 
     try {
       await StorageManager.updateProfile({ name, gender, email });
       state.currentUser = await StorageManager.getCurrentUser();
       await fillProfileForm();
       alert("個人資料已更新");
-      closeModal("profileModal");
+      returnToSettings("profileModal");
     } catch (error) {
       console.error(error);
       alert(`更新失敗：${error?.message || error}`);
     } finally {
       state.isProfileSubmitting = false;
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "儲存個人資料";
+      }
     }
   }
 
@@ -347,6 +392,7 @@
     event.preventDefault();
     if (state.isPasswordSubmitting) return;
 
+    const submitBtn = document.querySelector("#passwordForm button[type='submit']");
     const password = document.getElementById("profilePassword").value;
     const password2 = document.getElementById("profilePassword2").value;
 
@@ -366,17 +412,25 @@
     }
 
     state.isPasswordSubmitting = true;
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "儲存中...";
+    }
 
     try {
       await StorageManager.updatePassword(password);
       resetPasswordForm();
       alert("密碼已更新");
-      closeModal("passwordModal");
+      returnToSettings("passwordModal");
     } catch (error) {
       console.error(error);
       alert(`更新失敗：${error?.message || error}`);
     } finally {
       state.isPasswordSubmitting = false;
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "儲存新密碼";
+      }
     }
   }
 
@@ -452,20 +506,54 @@
   }
 
   async function logout() {
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+      logoutBtn.disabled = true;
+      logoutBtn.textContent = "登出中...";
+    }
+
     try {
-      const { error } = await window.supabaseClient.auth.signOut({ scope: "local" });
-      if (error) throw error;
+      await window.supabaseClient.auth.signOut();
+
+      // 強制清掉可能殘留的 supabase session
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith("sb-")) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith("sb-")) {
+          sessionStorage.removeItem(key);
+        }
+      });
     } catch (error) {
-      console.error(error);
+      console.error("登出失敗：", error);
     } finally {
       state.currentUser = null;
       state.items = [];
+      state.editingId = null;
+      state.searchKeyword = "";
+      state.statusFilter = "";
+      state.tempImage = "";
+      state.tempFile = null;
+      state.isEditMode = false;
+      state.isSubmitting = false;
+      state.isProfileSubmitting = false;
+      state.isPasswordSubmitting = false;
+
       refreshList();
       closeAllModals();
+
       document.getElementById("loginEmail").value = "";
       document.getElementById("loginPassword").value = "";
       showLoginPage();
       showLoginView();
+
+      if (logoutBtn) {
+        logoutBtn.disabled = false;
+        logoutBtn.textContent = "登出帳號";
+      }
     }
   }
 
@@ -475,14 +563,25 @@
       if (!closeType) return;
 
       if (state.isSubmitting && closeType === "editor") return;
+      if (state.isProfileSubmitting && closeType === "profile") return;
+      if (state.isPasswordSubmitting && closeType === "password") return;
 
       if (closeType === "editor") closeModal("editorModal");
       if (closeType === "detail") closeModal("detailModal");
       if (closeType === "stats") closeModal("statsModal");
       if (closeType === "settings") closeModal("settingsModal");
-      if (closeType === "profile") closeModal("profileModal");
-      if (closeType === "password") closeModal("passwordModal");
-      if (closeType === "theme") closeModal("themeModal");
+
+      if (closeType === "profile") {
+        returnToSettings("profileModal");
+      }
+
+      if (closeType === "password") {
+        returnToSettings("passwordModal");
+      }
+
+      if (closeType === "theme") {
+        returnToSettings("themeModal");
+      }
     });
   }
 
@@ -559,20 +658,22 @@
     });
 
     document.getElementById("openProfileBtn").addEventListener("click", async () => {
-      closeModal("settingsModal");
-      await fillProfileForm();
-      openModal("profileModal");
+      try {
+        await fillProfileForm();
+        switchToChildModal("profileModal");
+      } catch (error) {
+        console.error(error);
+        alert(`讀取個人資料失敗：${error?.message || error}`);
+      }
     });
 
     document.getElementById("openPasswordBtn").addEventListener("click", () => {
-      closeModal("settingsModal");
       resetPasswordForm();
-      openModal("passwordModal");
+      switchToChildModal("passwordModal");
     });
 
     document.getElementById("openThemeBtn").addEventListener("click", () => {
-      closeModal("settingsModal");
-      openModal("themeModal");
+      switchToChildModal("themeModal");
     });
 
     document.getElementById("profileForm").addEventListener("submit", saveProfile);
@@ -651,14 +752,9 @@
 
     window.supabaseClient.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        await bootstrapAuthedApp();
+        state.currentUser = session.user;
       } else {
         state.currentUser = null;
-        state.items = [];
-        refreshList();
-        closeAllModals();
-        showLoginPage();
-        showLoginView();
       }
     });
 
