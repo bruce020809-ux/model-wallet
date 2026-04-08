@@ -280,17 +280,23 @@
   }
 
   async function signup() {
+    const name = document.getElementById("nameInputAuth").value.trim();
     const email = document.getElementById("emailInput").value.trim();
     const password = document.getElementById("passwordInput").value;
 
-    if (!email || !password) {
-      showAuthMessage("請輸入 Email 與密碼", true);
+    if (!name || !email || !password) {
+      showAuthMessage("註冊時請輸入名字、Email 與密碼", true);
       return;
     }
 
     const { error } = await window.supabaseClient.auth.signUp({
       email,
-      password
+      password,
+      options: {
+        data: {
+          display_name: name
+        }
+      }
     });
 
     if (error) {
@@ -460,14 +466,24 @@
     bindAppEvents();
     applySavedTheme();
 
-    const user = await StorageManager.getCurrentUser();
-    if (!user) {
+    const sessionUser = await StorageManager.getSessionUser();
+    if (sessionUser) {
+      await bootstrapAuthedApp();
+    } else {
       showLoginPage();
-      registerServiceWorker();
-      return;
     }
 
-    await bootstrapAuthedApp();
+    window.supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        await bootstrapAuthedApp();
+      } else {
+        state.currentUser = null;
+        state.items = [];
+        refreshList();
+        showLoginPage();
+      }
+    });
+
     registerServiceWorker();
   }
 

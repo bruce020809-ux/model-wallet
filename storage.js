@@ -13,6 +13,20 @@ window.StorageManager = (() => {
     return user;
   }
 
+  async function getSessionUser() {
+    const {
+      data: { session },
+      error
+    } = await window.supabaseClient.auth.getSession();
+
+    if (error) {
+      console.error("取得 session 失敗:", error);
+      throw error;
+    }
+
+    return session?.user || null;
+  }
+
   async function getItems() {
     const user = await getCurrentUser();
     if (!user) return [];
@@ -156,6 +170,7 @@ window.StorageManager = (() => {
 
   return {
     getCurrentUser,
+    getSessionUser,
     getItems,
     saveItem,
     deleteItem,
