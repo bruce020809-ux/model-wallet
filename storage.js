@@ -156,12 +156,12 @@ window.StorageManager = (() => {
   }
 
   function saveTheme(themeObject) {
-    localStorage.setItem("car-wallet-theme-v3", JSON.stringify(themeObject));
+    localStorage.setItem("car-wallet-theme-v4", JSON.stringify(themeObject));
   }
 
   function getTheme() {
     try {
-      return JSON.parse(localStorage.getItem("car-wallet-theme-v3") || "null");
+      return JSON.parse(localStorage.getItem("car-wallet-theme-v4") || "null");
     } catch (error) {
       console.error("讀取 theme 失敗:", error);
       return null;

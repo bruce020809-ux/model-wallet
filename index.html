@@ -17,26 +17,56 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <!-- 登入頁 -->
+  <!-- 登入 / 註冊 -->
   <div id="loginPage" class="auth-shell hidden">
     <div class="auth-card">
-      <h1 class="auth-title">Car Wallet</h1>
-      <p class="auth-subtitle">請先登入你的收藏帳本</p>
+      <!-- 登入頁 -->
+      <div id="loginView">
+        <h1 class="auth-title">Car Wallet</h1>
+        <p class="auth-subtitle">登入你的收藏帳本</p>
 
-      <input id="nameInputAuth" class="form-input" type="text" placeholder="名字（註冊時使用）">
-      <input id="emailInput" class="form-input" type="email" placeholder="Email">
-      <input id="passwordInput" class="form-input" type="password" placeholder="Password">
+        <input id="loginEmail" class="form-input" type="email" placeholder="Email">
+        <input id="loginPassword" class="form-input" type="password" placeholder="Password">
 
-      <div class="auth-actions">
         <button id="loginBtn" class="primary-btn" type="button">登入</button>
-        <button id="signupBtn" class="secondary-btn auth-secondary" type="button">註冊</button>
+
+        <p class="auth-switch">
+          沒有帳號？
+          <span id="goSignup">註冊</span>
+        </p>
+      </div>
+
+      <!-- 註冊頁 -->
+      <div id="signupView" class="hidden">
+        <h1 class="auth-title">建立帳號</h1>
+        <p class="auth-subtitle">建立你的私人收藏帳本</p>
+
+        <input id="signupName" class="form-input" type="text" placeholder="姓名">
+
+        <select id="signupGender" class="form-input">
+          <option value="">選擇性別</option>
+          <option value="male">男</option>
+          <option value="female">女</option>
+          <option value="other">其他</option>
+        </select>
+
+        <input id="signupEmail" class="form-input" type="email" placeholder="Email">
+        <input id="signupPassword" class="form-input" type="password" placeholder="密碼">
+        <input id="signupPassword2" class="form-input" type="password" placeholder="確認密碼">
+
+        <button id="signupBtn" class="primary-btn" type="button">註冊</button>
+
+        <p class="auth-switch">
+          已有帳號？
+          <span id="goLogin">返回登入</span>
+        </p>
       </div>
 
       <p id="authMessage" class="auth-message"></p>
     </div>
   </div>
 
-  <!-- App -->
+  <!-- 主 App -->
   <div id="appRoot" class="app-shell hidden">
     <header class="topbar safe-top">
       <div>
