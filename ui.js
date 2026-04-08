@@ -197,14 +197,14 @@ window.UI = (() => {
     const root = document.documentElement;
 
     const finalTheme = {
-      bg: theme?.bg || "#0b1020",
-      panel: theme?.panel || "#121a2b",
-      panel2: theme?.panel2 || "#1a2438",
-      text: theme?.text || "#f3f4f6",
-      muted: theme?.muted || "#94a3b8",
-      accent: theme?.accent || "#8b5cf6",
-      accentText: theme?.accentText || "#ffffff",
-      danger: theme?.danger || "#ef4444"
+      bg: theme?.bg || "#D0E7D2",
+      panel: theme?.panel || "#B0D9B1",
+      panel2: theme?.panel2 || "#79AC78",
+      text: theme?.text || "#1F2A1F",
+      muted: theme?.muted || "#5A6F5A",
+      accent: theme?.accent || "#618263",
+      accentText: theme?.accentText || "#FFFFFF",
+      danger: theme?.danger || "#C84B4B"
     };
 
     root.style.setProperty("--bg", finalTheme.bg);

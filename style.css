@@ -1,17 +1,17 @@
 :root {
-  --bg: #0b1020;
-  --panel: #121a2b;
-  --panel-2: #1a2438;
-  --line: rgba(255, 255, 255, 0.08);
-  --text: #f3f4f6;
-  --muted: #94a3b8;
-  --accent: #8b5cf6;
-  --accent-text: #ffffff;
-  --danger: #ef4444;
+  --bg: #D0E7D2;
+  --panel: #B0D9B1;
+  --panel-2: #79AC78;
+  --line: rgba(0, 0, 0, 0.08);
+  --text: #1F2A1F;
+  --muted: #5A6F5A;
+  --accent: #618263;
+  --accent-text: #FFFFFF;
+  --danger: #C84B4B;
   --radius-xl: 24px;
   --radius-lg: 18px;
   --radius-md: 14px;
-  --shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+  --shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
 }
 
 * {
@@ -174,7 +174,7 @@ canvas {
 .summary-item {
   padding: 12px;
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .summary-item-label {
@@ -218,6 +218,12 @@ canvas {
   outline: none;
 }
 
+.search-input::placeholder,
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: var(--muted);
+}
+
 .search-input {
   margin-bottom: 10px;
 }
@@ -232,7 +238,7 @@ canvas {
 .search-input:focus,
 .filter-select:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
 }
 
 .section-block {
@@ -376,7 +382,7 @@ canvas {
 .modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.56);
+  background: rgba(0, 0, 0, 0.42);
 }
 
 .modal-panel {
@@ -675,10 +681,9 @@ button {
 }
 
 .settings-danger-item {
-  border-color: rgba(239, 68, 68, 0.25);
+  border-color: rgba(198, 40, 40, 0.25);
 }
 
-/* Theme presets */
 .theme-grid {
   display: grid;
   gap: 12px;
@@ -706,7 +711,7 @@ button {
 
 .theme-option.active {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.16);
 }
 
 .theme-preview {

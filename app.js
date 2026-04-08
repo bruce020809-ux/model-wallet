@@ -15,73 +15,73 @@
   };
 
   const THEMES = {
-  sage: {
-    name: "Sage",
-    bg: "#CFE6D1",
-    panel: "#B0D7B2",
-    panel2: "#7AAC79",
-    text: "#1F2A1F",
-    muted: "#5F7A60",
-    accent: "#668563",
-    accentText: "#FFFFFF",
-    danger: "#D64545"
-  },
-  lemonSea: {
-    name: "Lemon Sea",
-    bg: "#FAF2D3",
-    panel: "#F4E869",
-    panel2: "#5CD2E6",
-    text: "#1E2A35",
-    muted: "#5C6A73",
-    accent: "#3185C3",
-    accentText: "#FFFFFF",
-    danger: "#D64545"
-  },
-  violet: {
-    name: "Violet",
-    bg: "#E5CFF7",
-    panel: "#9D76C1",
-    panel2: "#713ABE",
-    text: "#240A34",
-    muted: "#6E4D8E",
-    accent: "#5B0788",
-    accentText: "#FFFFFF",
-    danger: "#D64545"
-  },
-  berry: {
-    name: "Berry",
-    bg: "#FADDC9",
-    panel: "#F88CA4",
-    panel2: "#E50046",
-    text: "#2B0A10",
-    muted: "#7A3A48",
-    accent: "#65000B",
-    accentText: "#FFFFFF",
-    danger: "#B91C1C"
-  },
-  stone: {
-    name: "Stone",
-    bg: "#F1EFEF",
-    panel: "#C8C4A1",
-    panel2: "#7D7C7C",
-    text: "#111111",
-    muted: "#666666",
-    accent: "#1A1717",
-    accentText: "#FFFFFF",
-    danger: "#D64545"
-  },
-  sandBlue: {
-    name: "Sand Blue",
-    bg: "#EBE4D1",
-    panel: "#B4B4B4",
-    panel2: "#26577C",
-    text: "#1B1B1B",
-    muted: "#6C6C6C",
-    accent: "#E55604",
-    accentText: "#FFFFFF",
-    danger: "#C62828"
-  }
-};
+    sage: {
+      name: "Sage",
+      bg: "#D0E7D2",
+      panel: "#B0D9B1",
+      panel2: "#79AC78",
+      text: "#1F2A1F",
+      muted: "#5A6F5A",
+      accent: "#618263",
+      accentText: "#FFFFFF",
+      danger: "#C84B4B"
+    },
+    lemonSea: {
+      name: "Lemon Sea",
+      bg: "#FBF2D3",
+      panel: "#F4E869",
+      panel2: "#5CD1E6",
+      text: "#1E2A35",
+      muted: "#5C6870",
+      accent: "#3185C3",
+      accentText: "#FFFFFF",
+      danger: "#C84B4B"
+    },
+    violet: {
+      name: "Violet",
+      bg: "#E4CEF6",
+      panel: "#9D76C1",
+      panel2: "#713ABE",
+      text: "#240A34",
+      muted: "#6E4D8E",
+      accent: "#5B0788",
+      accentText: "#FFFFFF",
+      danger: "#C84B4B"
+    },
+    berry: {
+      name: "Berry",
+      bg: "#FADEC9",
+      panel: "#F88CA3",
+      panel2: "#D80132",
+      text: "#2B0A10",
+      muted: "#7A3A48",
+      accent: "#3D0C11",
+      accentText: "#FFFFFF",
+      danger: "#B91C1C"
+    },
+    stone: {
+      name: "Stone",
+      bg: "#F1EFEF",
+      panel: "#CCC8AA",
+      panel2: "#7D7C7C",
+      text: "#111111",
+      muted: "#666666",
+      accent: "#191717",
+      accentText: "#FFFFFF",
+      danger: "#C84B4B"
+    },
+    sandBlue: {
+      name: "Sand Blue",
+      bg: "#EBE4D1",
+      panel: "#B4B4B3",
+      panel2: "#26577C",
+      text: "#1B1B1B",
+      muted: "#6C6C6C",
+      accent: "#E55704",
+      accentText: "#FFFFFF",
+      danger: "#C62828"
+    }
+  };
 
   function generateId() {
     return crypto.randomUUID();
@@ -719,7 +719,7 @@
       }
     }
 
-    return "purple";
+    return "sage";
   }
 
   function updateThemeSelection(selectedKey) {
@@ -853,7 +853,7 @@
 
   function applySavedTheme() {
     const savedTheme = StorageManager.getTheme();
-    const fallbackTheme = THEMES.purple;
+    const fallbackTheme = THEMES.sage;
 
     UI.applyTheme(savedTheme || fallbackTheme);
     updateThemeSelection(getCurrentThemeKey());
