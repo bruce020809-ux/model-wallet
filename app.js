@@ -15,62 +15,73 @@
   };
 
   const THEMES = {
-    purple: {
-      name: "Dark Purple",
-      bg: "#0b1020",
-      panel: "#121a2b",
-      panel2: "#1a2438",
-      text: "#f3f4f6",
-      muted: "#94a3b8",
-      accent: "#8b5cf6",
-      accentText: "#ffffff",
-      danger: "#ef4444"
-    },
-    blue: {
-      name: "Midnight Blue",
-      bg: "#0a0f1c",
-      panel: "#111827",
-      panel2: "#1e293b",
-      text: "#e5e7eb",
-      muted: "#9ca3af",
-      accent: "#3b82f6",
-      accentText: "#ffffff",
-      danger: "#ef4444"
-    },
-    green: {
-      name: "Emerald",
-      bg: "#07130f",
-      panel: "#0f1f19",
-      panel2: "#15332a",
-      text: "#ecfdf5",
-      muted: "#6ee7b7",
-      accent: "#10b981",
-      accentText: "#ffffff",
-      danger: "#ef4444"
-    },
-    orange: {
-      name: "Sunset",
-      bg: "#140d07",
-      panel: "#1f140c",
-      panel2: "#2b1d12",
-      text: "#fff7ed",
-      muted: "#fdba74",
-      accent: "#f97316",
-      accentText: "#ffffff",
-      danger: "#ef4444"
-    },
-    black: {
-      name: "Mono Black",
-      bg: "#000000",
-      panel: "#111111",
-      panel2: "#1a1a1a",
-      text: "#f5f5f5",
-      muted: "#a3a3a3",
-      accent: "#ffffff",
-      accentText: "#000000",
-      danger: "#ef4444"
-    }
-  };
+  sage: {
+    name: "Sage",
+    bg: "#CFE6D1",
+    panel: "#B0D7B2",
+    panel2: "#7AAC79",
+    text: "#1F2A1F",
+    muted: "#5F7A60",
+    accent: "#668563",
+    accentText: "#FFFFFF",
+    danger: "#D64545"
+  },
+  lemonSea: {
+    name: "Lemon Sea",
+    bg: "#FAF2D3",
+    panel: "#F4E869",
+    panel2: "#5CD2E6",
+    text: "#1E2A35",
+    muted: "#5C6A73",
+    accent: "#3185C3",
+    accentText: "#FFFFFF",
+    danger: "#D64545"
+  },
+  violet: {
+    name: "Violet",
+    bg: "#E5CFF7",
+    panel: "#9D76C1",
+    panel2: "#713ABE",
+    text: "#240A34",
+    muted: "#6E4D8E",
+    accent: "#5B0788",
+    accentText: "#FFFFFF",
+    danger: "#D64545"
+  },
+  berry: {
+    name: "Berry",
+    bg: "#FADDC9",
+    panel: "#F88CA4",
+    panel2: "#E50046",
+    text: "#2B0A10",
+    muted: "#7A3A48",
+    accent: "#65000B",
+    accentText: "#FFFFFF",
+    danger: "#B91C1C"
+  },
+  stone: {
+    name: "Stone",
+    bg: "#F1EFEF",
+    panel: "#C8C4A1",
+    panel2: "#7D7C7C",
+    text: "#111111",
+    muted: "#666666",
+    accent: "#1A1717",
+    accentText: "#FFFFFF",
+    danger: "#D64545"
+  },
+  sandBlue: {
+    name: "Sand Blue",
+    bg: "#EBE4D1",
+    panel: "#B4B4B4",
+    panel2: "#26577C",
+    text: "#1B1B1B",
+    muted: "#6C6C6C",
+    accent: "#E55604",
+    accentText: "#FFFFFF",
+    danger: "#C62828"
+  }
+};
 
   function generateId() {
     return crypto.randomUUID();

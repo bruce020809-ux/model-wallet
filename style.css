@@ -712,13 +712,15 @@ button {
 .theme-preview {
   display: flex;
   gap: 6px;
+  align-items: center;
 }
 
 .theme-swatch {
-  width: 20px;
+  width: 18px;
   height: 48px;
   border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
 }
 
 .theme-texts {
