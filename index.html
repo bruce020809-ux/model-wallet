@@ -25,15 +25,15 @@
         <h1 class="auth-title">Car Wallet</h1>
         <p class="auth-subtitle">登入你的收藏帳本</p>
 
-        <input id="loginEmail" class="form-input" type="email" placeholder="Email">
-        <input id="loginPassword" class="form-input" type="password" placeholder="Password">
+        <input id="loginEmail" class="form-input auth-input" type="email" placeholder="Email">
+        <input id="loginPassword" class="form-input auth-input" type="password" placeholder="Password">
 
-        <button id="loginBtn" class="primary-btn" type="button">登入</button>
+        <button id="loginBtn" class="primary-btn auth-main-btn" type="button">登入</button>
 
-        <p class="auth-switch">
-          沒有帳號？
-          <span id="goSignup">註冊</span>
-        </p>
+        <div class="auth-switch-row">
+          <span class="auth-switch-text">沒有帳號？</span>
+          <button id="goSignup" class="auth-link-btn" type="button">註冊</button>
+        </div>
       </div>
 
       <!-- 註冊頁 -->
@@ -41,25 +41,25 @@
         <h1 class="auth-title">建立帳號</h1>
         <p class="auth-subtitle">建立你的私人收藏帳本</p>
 
-        <input id="signupName" class="form-input" type="text" placeholder="姓名">
+        <input id="signupName" class="form-input auth-input" type="text" placeholder="姓名">
 
-        <select id="signupGender" class="form-input">
+        <select id="signupGender" class="form-input auth-input">
           <option value="">選擇性別</option>
           <option value="male">男</option>
           <option value="female">女</option>
           <option value="other">其他</option>
         </select>
 
-        <input id="signupEmail" class="form-input" type="email" placeholder="Email">
-        <input id="signupPassword" class="form-input" type="password" placeholder="密碼">
-        <input id="signupPassword2" class="form-input" type="password" placeholder="確認密碼">
+        <input id="signupEmail" class="form-input auth-input" type="email" placeholder="Email">
+        <input id="signupPassword" class="form-input auth-input" type="password" placeholder="密碼">
+        <input id="signupPassword2" class="form-input auth-input" type="password" placeholder="確認密碼">
 
-        <button id="signupBtn" class="primary-btn" type="button">註冊</button>
+        <button id="signupBtn" class="primary-btn auth-main-btn" type="button">註冊</button>
 
-        <p class="auth-switch">
-          已有帳號？
-          <span id="goLogin">返回登入</span>
-        </p>
+        <div class="auth-switch-row">
+          <span class="auth-switch-text">已有帳號？</span>
+          <button id="goLogin" class="auth-link-btn" type="button">返回登入</button>
+        </div>
       </div>
 
       <p id="authMessage" class="auth-message"></p>

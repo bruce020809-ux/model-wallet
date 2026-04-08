@@ -53,6 +53,22 @@
     document.getElementById("appRoot").classList.remove("hidden");
   }
 
+  function showLoginView() {
+    const loginView = document.getElementById("loginView");
+    const signupView = document.getElementById("signupView");
+    if (loginView) loginView.classList.remove("hidden");
+    if (signupView) signupView.classList.add("hidden");
+    showAuthMessage("");
+  }
+
+  function showSignupView() {
+    const loginView = document.getElementById("loginView");
+    const signupView = document.getElementById("signupView");
+    if (loginView) loginView.classList.add("hidden");
+    if (signupView) signupView.classList.remove("hidden");
+    showAuthMessage("");
+  }
+
   function resetEditorState() {
     state.editingId = null;
     state.tempImage = "";
@@ -257,8 +273,8 @@
   }
 
   async function login() {
-    const email = document.getElementById("emailInput").value.trim();
-    const password = document.getElementById("passwordInput").value;
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value;
 
     if (!email || !password) {
       showAuthMessage("請輸入 Email 與密碼", true);
@@ -280,12 +296,24 @@
   }
 
   async function signup() {
-    const name = document.getElementById("nameInputAuth").value.trim();
-    const email = document.getElementById("emailInput").value.trim();
-    const password = document.getElementById("passwordInput").value;
+    const name = document.getElementById("signupName").value.trim();
+    const gender = document.getElementById("signupGender").value;
+    const email = document.getElementById("signupEmail").value.trim();
+    const password = document.getElementById("signupPassword").value;
+    const password2 = document.getElementById("signupPassword2").value;
 
-    if (!name || !email || !password) {
-      showAuthMessage("註冊時請輸入名字、Email 與密碼", true);
+    if (!name || !gender || !email || !password || !password2) {
+      showAuthMessage("請填完整資料", true);
+      return;
+    }
+
+    if (password !== password2) {
+      showAuthMessage("兩次密碼不一致", true);
+      return;
+    }
+
+    if (password.length < 6) {
+      showAuthMessage("密碼至少 6 碼", true);
       return;
     }
 
@@ -294,7 +322,8 @@
       password,
       options: {
         data: {
-          display_name: name
+          display_name: name,
+          gender: gender
         }
       }
     });
@@ -304,7 +333,14 @@
       return;
     }
 
-    showAuthMessage("註冊成功，若你開啟 Email 驗證，請先去信箱確認。", false);
+    showAuthMessage("註冊成功，請登入", false);
+    showLoginView();
+
+    document.getElementById("signupName").value = "";
+    document.getElementById("signupGender").value = "";
+    document.getElementById("signupEmail").value = "";
+    document.getElementById("signupPassword").value = "";
+    document.getElementById("signupPassword2").value = "";
   }
 
   async function logout() {
@@ -318,6 +354,7 @@
     state.items = [];
     refreshList();
     showLoginPage();
+    showLoginView();
   }
 
   function bindCloseButtons() {
@@ -419,6 +456,14 @@
   function bindAuthEvents() {
     document.getElementById("loginBtn").addEventListener("click", login);
     document.getElementById("signupBtn").addEventListener("click", signup);
+
+    document.getElementById("goSignup").addEventListener("click", () => {
+      showSignupView();
+    });
+
+    document.getElementById("goLogin").addEventListener("click", () => {
+      showLoginView();
+    });
   }
 
   function applySavedTheme() {
@@ -453,6 +498,7 @@
 
     if (!state.currentUser) {
       showLoginPage();
+      showLoginView();
       return;
     }
 
@@ -471,6 +517,7 @@
       await bootstrapAuthedApp();
     } else {
       showLoginPage();
+      showLoginView();
     }
 
     window.supabaseClient.auth.onAuthStateChange(async (_event, session) => {
@@ -481,6 +528,7 @@
         state.items = [];
         refreshList();
         showLoginPage();
+        showLoginView();
       }
     });
 
