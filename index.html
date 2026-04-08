@@ -20,7 +20,6 @@
   <!-- 登入 / 註冊 -->
   <div id="loginPage" class="auth-shell hidden">
     <div class="auth-card">
-      <!-- 登入頁 -->
       <div id="loginView">
         <h1 class="auth-title">Car Wallet</h1>
         <p class="auth-subtitle">登入你的收藏帳本</p>
@@ -36,7 +35,6 @@
         </div>
       </div>
 
-      <!-- 註冊頁 -->
       <div id="signupView" class="hidden">
         <h1 class="auth-title">建立帳號</h1>
         <p class="auth-subtitle">建立你的私人收藏帳本</p>
@@ -220,7 +218,7 @@
     </div>
   </div>
 
-  <!-- 設定 -->
+  <!-- 主設定 -->
   <div class="modal hidden" id="settingsModal">
     <div class="modal-backdrop" data-close="settings"></div>
     <div class="modal-panel">
@@ -229,33 +227,110 @@
         <button class="close-button" data-close="settings" type="button">✕</button>
       </div>
 
+      <div class="settings-menu">
+        <button id="openProfileBtn" class="settings-menu-item" type="button">
+          <div>
+            <div class="settings-menu-title">編輯帳號資訊</div>
+            <div class="settings-menu-subtitle">姓名、性別、Email、密碼</div>
+          </div>
+          <span>›</span>
+        </button>
+
+        <button id="openThemeBtn" class="settings-menu-item" type="button">
+          <div>
+            <div class="settings-menu-title">主題顏色</div>
+            <div class="settings-menu-subtitle">調整頁面與按鈕配色</div>
+          </div>
+          <span>›</span>
+        </button>
+
+        <button id="settingsExportBtn" class="settings-menu-item" type="button">
+          <div>
+            <div class="settings-menu-title">匯出備份</div>
+            <div class="settings-menu-subtitle">下載目前收藏資料</div>
+          </div>
+          <span>↓</span>
+        </button>
+
+        <button id="logoutBtn" class="settings-menu-item settings-danger-item" type="button">
+          <div>
+            <div class="settings-menu-title">登出帳號</div>
+            <div class="settings-menu-subtitle">回到登入畫面</div>
+          </div>
+          <span>↩</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 帳號資訊 -->
+  <div class="modal hidden" id="profileModal">
+    <div class="modal-backdrop" data-close="profile"></div>
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h3>編輯帳號資訊</h3>
+        <button class="close-button" data-close="profile" type="button">✕</button>
+      </div>
+
+      <form id="profileForm" class="form-grid">
+        <label class="form-label" for="profileName">姓名</label>
+        <input id="profileName" class="form-input" type="text" placeholder="姓名">
+
+        <label class="form-label" for="profileGender">性別</label>
+        <select id="profileGender" class="form-input">
+          <option value="">選擇性別</option>
+          <option value="male">男</option>
+          <option value="female">女</option>
+          <option value="other">其他</option>
+        </select>
+
+        <label class="form-label" for="profileEmail">Email</label>
+        <input id="profileEmail" class="form-input" type="email" placeholder="Email">
+
+        <label class="form-label" for="profilePassword">新密碼</label>
+        <input id="profilePassword" class="form-input" type="password" placeholder="不修改可留白">
+
+        <label class="form-label" for="profilePassword2">確認新密碼</label>
+        <input id="profilePassword2" class="form-input" type="password" placeholder="再次輸入新密碼">
+
+        <button type="submit" class="primary-btn">儲存帳號資訊</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 主題顏色 -->
+  <div class="modal hidden" id="themeModal">
+    <div class="modal-backdrop" data-close="theme"></div>
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h3>主題顏色</h3>
+        <button class="close-button" data-close="theme" type="button">✕</button>
+      </div>
+
       <div class="form-grid">
         <label class="form-label" for="themeBgInput">頁面底色</label>
-        <input id="themeBgInput" class="form-input color-input" type="color" value="#0b1020">
+        <input id="themeBgInput" class="form-input color-input compact-color" type="color" value="#0b1020">
 
         <label class="form-label" for="themePanelInput">卡片底色</label>
-        <input id="themePanelInput" class="form-input color-input" type="color" value="#121a2b">
+        <input id="themePanelInput" class="form-input color-input compact-color" type="color" value="#121a2b">
 
         <label class="form-label" for="themePanel2Input">次要區塊色</label>
-        <input id="themePanel2Input" class="form-input color-input" type="color" value="#1a2438">
+        <input id="themePanel2Input" class="form-input color-input compact-color" type="color" value="#1a2438">
 
         <label class="form-label" for="themeTextInput">主要文字色</label>
-        <input id="themeTextInput" class="form-input color-input" type="color" value="#f3f4f6">
+        <input id="themeTextInput" class="form-input color-input compact-color" type="color" value="#f3f4f6">
 
         <label class="form-label" for="themeMutedInput">次要文字色</label>
-        <input id="themeMutedInput" class="form-input color-input" type="color" value="#94a3b8">
+        <input id="themeMutedInput" class="form-input color-input compact-color" type="color" value="#94a3b8">
 
         <label class="form-label" for="themeAccentInput">主色</label>
-        <input id="themeAccentInput" class="form-input color-input" type="color" value="#8b5cf6">
+        <input id="themeAccentInput" class="form-input color-input compact-color" type="color" value="#8b5cf6">
 
         <label class="form-label" for="themeAccentTextInput">主色文字</label>
-        <input id="themeAccentTextInput" class="form-input color-input" type="color" value="#ffffff">
+        <input id="themeAccentTextInput" class="form-input color-input compact-color" type="color" value="#ffffff">
 
         <label class="form-label" for="themeDangerInput">危險按鈕色</label>
-        <input id="themeDangerInput" class="form-input color-input" type="color" value="#ef4444">
-
-        <button id="settingsExportBtn" class="primary-btn" type="button">匯出備份</button>
-        <button id="logoutBtn" class="secondary-btn auth-secondary" type="button">登出</button>
+        <input id="themeDangerInput" class="form-input color-input compact-color" type="color" value="#ef4444">
       </div>
     </div>
   </div>

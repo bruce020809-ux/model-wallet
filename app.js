@@ -8,7 +8,8 @@
     tempFile: null,
     isEditMode: false,
     isSubmitting: false,
-    currentUser: null
+    currentUser: null,
+    isProfileSubmitting: false
   };
 
   function generateId() {
@@ -272,6 +273,73 @@
     Stats.render(state.items);
   }
 
+  async function fillProfileForm() {
+    const user = await StorageManager.getCurrentUser();
+    if (!user) return;
+
+    const meta = user.user_metadata || {};
+    document.getElementById("profileName").value = meta.display_name || "";
+    document.getElementById("profileGender").value = meta.gender || "";
+    document.getElementById("profileEmail").value = user.email || "";
+    document.getElementById("profilePassword").value = "";
+    document.getElementById("profilePassword2").value = "";
+  }
+
+  async function saveProfile(event) {
+    event.preventDefault();
+    if (state.isProfileSubmitting) return;
+
+    const name = document.getElementById("profileName").value.trim();
+    const gender = document.getElementById("profileGender").value;
+    const email = document.getElementById("profileEmail").value.trim();
+    const password = document.getElementById("profilePassword").value;
+    const password2 = document.getElementById("profilePassword2").value;
+
+    if (!name || !gender || !email) {
+      alert("姓名、性別、Email 不能空白");
+      return;
+    }
+
+    if ((password || password2) && password !== password2) {
+      alert("兩次新密碼不一致");
+      return;
+    }
+
+    if (password && password.length < 6) {
+      alert("新密碼至少 6 碼");
+      return;
+    }
+
+    state.isProfileSubmitting = true;
+
+    try {
+      const updatePayload = {
+        email,
+        data: {
+          display_name: name,
+          gender
+        }
+      };
+
+      if (password) {
+        updatePayload.password = password;
+      }
+
+      const { error } = await window.supabaseClient.auth.updateUser(updatePayload);
+
+      if (error) throw error;
+
+      alert("帳號資訊已更新");
+      state.currentUser = await StorageManager.getCurrentUser();
+      closeModal("profileModal");
+    } catch (error) {
+      console.error(error);
+      alert(`更新失敗：${error?.message || error}`);
+    } finally {
+      state.isProfileSubmitting = false;
+    }
+  }
+
   async function login() {
     const email = document.getElementById("loginEmail").value.trim();
     const password = document.getElementById("loginPassword").value;
@@ -353,6 +421,7 @@
     state.currentUser = null;
     state.items = [];
     refreshList();
+    closeModal("settingsModal");
     showLoginPage();
     showLoginView();
   }
@@ -368,6 +437,8 @@
       if (closeType === "detail") closeModal("detailModal");
       if (closeType === "stats") closeModal("statsModal");
       if (closeType === "settings") closeModal("settingsModal");
+      if (closeType === "profile") closeModal("profileModal");
+      if (closeType === "theme") closeModal("themeModal");
     });
   }
 
@@ -443,6 +514,17 @@
       openModal("settingsModal");
     });
 
+    document.getElementById("openProfileBtn").addEventListener("click", async () => {
+      await fillProfileForm();
+      openModal("profileModal");
+    });
+
+    document.getElementById("openThemeBtn").addEventListener("click", () => {
+      openModal("themeModal");
+    });
+
+    document.getElementById("profileForm").addEventListener("submit", saveProfile);
+
     document.getElementById("settingsExportBtn").addEventListener("click", () => {
       StorageManager.exportItems(state.items);
     });
@@ -456,14 +538,8 @@
   function bindAuthEvents() {
     document.getElementById("loginBtn").addEventListener("click", login);
     document.getElementById("signupBtn").addEventListener("click", signup);
-
-    document.getElementById("goSignup").addEventListener("click", () => {
-      showSignupView();
-    });
-
-    document.getElementById("goLogin").addEventListener("click", () => {
-      showLoginView();
-    });
+    document.getElementById("goSignup").addEventListener("click", showSignupView);
+    document.getElementById("goLogin").addEventListener("click", showLoginView);
   }
 
   function applySavedTheme() {
