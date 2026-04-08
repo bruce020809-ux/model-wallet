@@ -107,21 +107,11 @@
     if (panel) panel.scrollTop = 0;
   }
 
-  function setSubmitButtonLoading(isLoading) {
-    const submitBtn = document.querySelector("#itemForm button[type='submit']");
-    if (!submitBtn) return;
-
-    submitBtn.disabled = isLoading;
-    submitBtn.textContent = isLoading ? "儲存中..." : "儲存模型";
-    submitBtn.style.opacity = isLoading ? "0.7" : "1";
-    submitBtn.style.pointerEvents = isLoading ? "none" : "auto";
-  }
-
   function showAuthMessage(message, isError = false) {
     const el = $("authMessage");
     if (!el) return;
     el.textContent = message || "";
-    el.style.color = isError ? "#fecaca" : "var(--muted)";
+    el.style.color = isError ? "#b91c1c" : "var(--muted)";
   }
 
   function showLoginPage() {
@@ -170,32 +160,17 @@
     });
   }
 
-  function resetEditorState() {
-    state.editingId = null;
-    state.tempImage = "";
-    state.tempFile = null;
-    state.isSubmitting = false;
-    if (window.UI?.setEditorMode) UI.setEditorMode(false);
-    if (window.UI?.resetForm) UI.resetForm();
-    setSubmitButtonLoading(false);
-    scrollModalToTop("editorModal");
-  }
-
   function openModal(id) {
     const modal = $(id);
     if (!modal) return;
     modal.classList.remove("hidden");
     document.body.style.overflow = "hidden";
-
-    requestAnimationFrame(() => {
-      scrollModalToTop(id);
-    });
+    requestAnimationFrame(() => scrollModalToTop(id));
   }
 
   function closeModal(id) {
     const modal = $(id);
     if (!modal) return;
-
     modal.classList.add("hidden");
 
     if (id === "editorModal") {
@@ -240,6 +215,61 @@
     openModal("settingsModal");
   }
 
+  function setItemSubmitButtonLoading(isLoading) {
+    const submitBtn = document.querySelector("#itemForm button[type='submit']");
+    if (!submitBtn) return;
+    submitBtn.disabled = isLoading;
+    submitBtn.textContent = isLoading ? "儲存中..." : "儲存模型";
+    submitBtn.style.opacity = isLoading ? "0.7" : "1";
+    submitBtn.style.pointerEvents = isLoading ? "none" : "auto";
+  }
+
+  function setProfileSubmitButtonLoading(isLoading) {
+    const submitBtn = document.querySelector("#profileForm button[type='submit']");
+    if (!submitBtn) return;
+    submitBtn.disabled = isLoading;
+    submitBtn.textContent = isLoading ? "儲存中..." : "儲存個人資料";
+  }
+
+  function setPasswordSubmitButtonLoading(isLoading) {
+    const submitBtn = document.querySelector("#passwordForm button[type='submit']");
+    if (!submitBtn) return;
+    submitBtn.disabled = isLoading;
+    submitBtn.textContent = isLoading ? "儲存中..." : "儲存新密碼";
+  }
+
+  function setAppNameSubmitButtonLoading(isLoading) {
+    const submitBtn = document.querySelector("#appNameForm button[type='submit']");
+    if (!submitBtn) return;
+    submitBtn.disabled = isLoading;
+    submitBtn.textContent = isLoading ? "儲存中..." : "儲存名稱";
+  }
+
+  function getDisplayName() {
+    const meta = state.currentUser?.user_metadata || {};
+    return meta.display_name || "使用者";
+  }
+
+  function refreshTopbar() {
+    const appName = window.StorageManager?.getAppName
+      ? StorageManager.getAppName()
+      : "Car Wallet";
+
+    if (window.UI?.renderTopbar) {
+      UI.renderTopbar({
+        userName: getDisplayName(),
+        appName
+      });
+      return;
+    }
+
+    const subtitleEl = $("topbarSubtitle");
+    const titleEl = $("topbarTitle");
+    if (subtitleEl) subtitleEl.textContent = `${getDisplayName()}的模型帳本`;
+    if (titleEl) titleEl.textContent = appName;
+    document.title = appName;
+  }
+
   function refreshList() {
     if (window.UI?.renderSummary) {
       UI.renderSummary(state.items);
@@ -259,25 +289,6 @@
     }
   }
 
-  function getDisplayName() {
-    const meta = state.currentUser?.user_metadata || {};
-    return meta.display_name || "使用者";
-  }
-
-  function refreshTopbar() {
-    if (window.UI?.renderTopbar) {
-      UI.renderTopbar({
-        userName: getDisplayName(),
-        appName: window.StorageManager?.getAppName ? StorageManager.getAppName() : "Car Wallet"
-      });
-    } else {
-      const subtitleEl = $("topbarSubtitle");
-      const titleEl = $("topbarTitle");
-      if (subtitleEl) subtitleEl.textContent = `${getDisplayName()}的模型帳本`;
-      if (titleEl) titleEl.textContent = window.StorageManager?.getAppName ? StorageManager.getAppName() : "Car Wallet";
-    }
-  }
-
   function findItem(id) {
     return state.items.find(item => item.id === id);
   }
@@ -286,6 +297,28 @@
     if (!window.StorageManager?.getItems) return;
     state.items = await StorageManager.getItems();
     refreshList();
+  }
+
+  function resetEditorState() {
+    state.editingId = null;
+    state.tempImage = "";
+    state.tempFile = null;
+    state.isSubmitting = false;
+    if (window.UI?.setEditorMode) UI.setEditorMode(false);
+    if (window.UI?.resetForm) UI.resetForm();
+    setItemSubmitButtonLoading(false);
+    scrollModalToTop("editorModal");
+  }
+
+  function resetPasswordForm() {
+    if ($("profilePassword")) $("profilePassword").value = "";
+    if ($("profilePassword2")) $("profilePassword2").value = "";
+  }
+
+  function fillAppNameForm() {
+    if ($("appNameInput") && window.StorageManager?.getAppName) {
+      $("appNameInput").value = StorageManager.getAppName();
+    }
   }
 
   function startCreate() {
@@ -301,9 +334,11 @@
     state.tempImage = item.image || "";
     state.tempFile = null;
     state.isSubmitting = false;
+
     if (window.UI?.setEditorMode) UI.setEditorMode(true);
     if (window.UI?.fillForm) UI.fillForm(item);
-    setSubmitButtonLoading(false);
+
+    setItemSubmitButtonLoading(false);
     openModal("editorModal");
   }
 
@@ -340,7 +375,7 @@
     }
 
     state.isSubmitting = true;
-    setSubmitButtonLoading(true);
+    setItemSubmitButtonLoading(true);
 
     const existing = state.items.find(item => item.id === state.editingId);
     let imageUrl = state.tempImage || "";
@@ -372,7 +407,7 @@
       alert(`儲存失敗：${error?.message || error}`);
     } finally {
       state.isSubmitting = false;
-      setSubmitButtonLoading(false);
+      setItemSubmitButtonLoading(false);
     }
   }
 
@@ -407,7 +442,37 @@
     reader.readAsDataURL(file);
   }
 
+  function resetStatsSectionsIfNeeded() {
+    const modalBody = $("statsModalPanel");
+    if (!modalBody) return;
+
+    if (!document.getElementById("brandChart")) {
+      modalBody.innerHTML = `
+        <div class="modal-header">
+          <h3>統計分析</h3>
+          <button class="close-button" data-close="stats" type="button">✕</button>
+        </div>
+
+        <div class="stats-section">
+          <h4 class="stats-title">各品牌佔比</h4>
+          <canvas id="brandChart"></canvas>
+        </div>
+
+        <div class="stats-section">
+          <h4 class="stats-title">每月花費</h4>
+          <canvas id="monthChart"></canvas>
+        </div>
+
+        <div class="stats-section">
+          <h4 class="stats-title">各品牌花費</h4>
+          <div id="brandSpendList" class="stats-list"></div>
+        </div>
+      `;
+    }
+  }
+
   function openStats() {
+    resetStatsSectionsIfNeeded();
     openModal("statsModal");
     if (window.Stats?.render) Stats.render(state.items);
   }
@@ -424,22 +489,10 @@
     if ($("profileEmail")) $("profileEmail").value = user.email || "";
   }
 
-  function fillAppNameForm() {
-    if ($("appNameInput")) {
-      $("appNameInput").value = window.StorageManager?.getAppName ? StorageManager.getAppName() : "Car Wallet";
-    }
-  }
-
-  function resetPasswordForm() {
-    if ($("profilePassword")) $("profilePassword").value = "";
-    if ($("profilePassword2")) $("profilePassword2").value = "";
-  }
-
   async function saveProfile(event) {
     event.preventDefault();
     if (state.isProfileSubmitting) return;
 
-    const submitBtn = document.querySelector("#profileForm button[type='submit']");
     const name = $("profileName")?.value.trim();
     const gender = $("profileGender")?.value;
     const email = $("profileEmail")?.value.trim();
@@ -450,10 +503,7 @@
     }
 
     state.isProfileSubmitting = true;
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = "儲存中...";
-    }
+    setProfileSubmitButtonLoading(true);
 
     try {
       await StorageManager.updateProfile({ name, gender, email });
@@ -467,10 +517,7 @@
       alert(`更新失敗：${error?.message || error}`);
     } finally {
       state.isProfileSubmitting = false;
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = "儲存個人資料";
-      }
+      setProfileSubmitButtonLoading(false);
     }
   }
 
@@ -478,7 +525,6 @@
     event.preventDefault();
     if (state.isPasswordSubmitting) return;
 
-    const submitBtn = document.querySelector("#passwordForm button[type='submit']");
     const password = $("profilePassword")?.value;
     const password2 = $("profilePassword2")?.value;
 
@@ -498,10 +544,7 @@
     }
 
     state.isPasswordSubmitting = true;
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = "儲存中...";
-    }
+    setPasswordSubmitButtonLoading(true);
 
     try {
       await StorageManager.updatePassword(password);
@@ -513,10 +556,7 @@
       alert(`更新失敗：${error?.message || error}`);
     } finally {
       state.isPasswordSubmitting = false;
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = "儲存新密碼";
-      }
+      setPasswordSubmitButtonLoading(false);
     }
   }
 
@@ -524,7 +564,6 @@
     event.preventDefault();
     if (state.isAppNameSubmitting) return;
 
-    const submitBtn = document.querySelector("#appNameForm button[type='submit']");
     const appName = $("appNameInput")?.value.trim();
 
     if (!appName) {
@@ -538,15 +577,10 @@
     }
 
     state.isAppNameSubmitting = true;
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = "儲存中...";
-    }
+    setAppNameSubmitButtonLoading(true);
 
     try {
-      if (window.StorageManager?.saveAppName) {
-        StorageManager.saveAppName(appName);
-      }
+      StorageManager.saveAppName(appName);
       refreshTopbar();
       alert("名稱已更新");
       returnToSettings("appNameModal");
@@ -555,82 +589,96 @@
       alert(`更新失敗：${error?.message || error}`);
     } finally {
       state.isAppNameSubmitting = false;
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = "儲存名稱";
-      }
+      setAppNameSubmitButtonLoading(false);
     }
   }
 
   async function login() {
-    const email = $("loginEmail")?.value.trim();
-    const password = $("loginPassword")?.value;
+    try {
+      const email = $("loginEmail")?.value.trim();
+      const password = $("loginPassword")?.value;
 
-    if (!email || !password) {
-      showAuthMessage("請輸入 Email 與密碼", true);
-      return;
+      if (!email || !password) {
+        showAuthMessage("請輸入 Email 與密碼", true);
+        return;
+      }
+
+      if (!window.supabaseClient?.auth) {
+        showAuthMessage("Supabase 未正確載入", true);
+        return;
+      }
+
+      showAuthMessage("登入中...", false);
+
+      const { error } = await window.supabaseClient.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        showAuthMessage(error.message, true);
+        return;
+      }
+
+      showAuthMessage("");
+      await bootstrapAuthedApp();
+    } catch (error) {
+      console.error("login error:", error);
+      showAuthMessage(error?.message || "登入失敗", true);
     }
-
-    const { error } = await window.supabaseClient.auth.signInWithPassword({
-      email,
-      password
-    });
-
-    if (error) {
-      showAuthMessage(error.message, true);
-      return;
-    }
-
-    showAuthMessage("");
-    await bootstrapAuthedApp();
   }
 
   async function signup() {
-    const name = $("signupName")?.value.trim();
-    const gender = $("signupGender")?.value;
-    const email = $("signupEmail")?.value.trim();
-    const password = $("signupPassword")?.value;
-    const password2 = $("signupPassword2")?.value;
+    try {
+      const name = $("signupName")?.value.trim();
+      const gender = $("signupGender")?.value;
+      const email = $("signupEmail")?.value.trim();
+      const password = $("signupPassword")?.value;
+      const password2 = $("signupPassword2")?.value;
 
-    if (!name || !gender || !email || !password || !password2) {
-      showAuthMessage("請填完整資料", true);
-      return;
-    }
-
-    if (password !== password2) {
-      showAuthMessage("兩次密碼不一致", true);
-      return;
-    }
-
-    if (password.length < 6) {
-      showAuthMessage("密碼至少 6 碼", true);
-      return;
-    }
-
-    const { error } = await window.supabaseClient.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          display_name: name,
-          gender: gender
-        }
+      if (!name || !gender || !email || !password || !password2) {
+        showAuthMessage("請填完整資料", true);
+        return;
       }
-    });
 
-    if (error) {
-      showAuthMessage(error.message, true);
-      return;
+      if (password !== password2) {
+        showAuthMessage("兩次密碼不一致", true);
+        return;
+      }
+
+      if (password.length < 6) {
+        showAuthMessage("密碼至少 6 碼", true);
+        return;
+      }
+
+      const { error } = await window.supabaseClient.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            display_name: name,
+            gender: gender
+          }
+        }
+      });
+
+      if (error) {
+        showAuthMessage(error.message, true);
+        return;
+      }
+
+      showAuthMessage("註冊成功，請登入", false);
+      showLoginView();
+
+      if ($("signupName")) $("signupName").value = "";
+      if ($("signupGender")) $("signupGender").value = "";
+      if ($("signupEmail")) $("signupEmail").value = "";
+      if ($("signupPassword")) $("signupPassword").value = "";
+      if ($("signupPassword2")) $("signupPassword2").value = "";
+    } catch (error) {
+      console.error("signup error:", error);
+      showAuthMessage(error?.message || "註冊失敗", true);
     }
-
-    showAuthMessage("註冊成功，請登入", false);
-    showLoginView();
-
-    if ($("signupName")) $("signupName").value = "";
-    if ($("signupGender")) $("signupGender").value = "";
-    if ($("signupEmail")) $("signupEmail").value = "";
-    if ($("signupPassword")) $("signupPassword").value = "";
-    if ($("signupPassword2")) $("signupPassword2").value = "";
   }
 
   async function logout() {
@@ -641,7 +689,9 @@
     }
 
     try {
-      await window.supabaseClient.auth.signOut();
+      if (window.supabaseClient?.auth) {
+        await window.supabaseClient.auth.signOut();
+      }
 
       Object.keys(localStorage).forEach(key => {
         if (key.startsWith("sb-")) {
@@ -655,7 +705,7 @@
         }
       });
     } catch (error) {
-      console.error("登出失敗：", error);
+      console.error("logout error:", error);
     } finally {
       state.currentUser = null;
       state.items = [];
@@ -672,11 +722,11 @@
 
       refreshList();
       closeAllModals();
+      showLoginPage();
+      showLoginView();
 
       if ($("loginEmail")) $("loginEmail").value = "";
       if ($("loginPassword")) $("loginPassword").value = "";
-      showLoginPage();
-      showLoginView();
 
       if (logoutBtn) {
         logoutBtn.disabled = false;
@@ -879,9 +929,7 @@
 
   async function bootstrapAuthedApp() {
     if (!window.StorageManager?.getCurrentUser) {
-      showLoginPage();
-      showLoginView();
-      return;
+      throw new Error("storage.js 未正確載入");
     }
 
     state.currentUser = await StorageManager.getCurrentUser();
@@ -899,7 +947,6 @@
   }
 
   async function init() {
-    // 先強制顯示登入頁，避免 JS 中途出錯整頁空白
     showLoginPage();
     showLoginView();
 
@@ -909,9 +956,15 @@
 
     if (!window.StorageManager?.getSessionUser) return;
 
-    const sessionUser = await StorageManager.getSessionUser();
-    if (sessionUser) {
-      await bootstrapAuthedApp();
+    try {
+      const sessionUser = await StorageManager.getSessionUser();
+      if (sessionUser) {
+        await bootstrapAuthedApp();
+      }
+    } catch (error) {
+      console.error("init session error:", error);
+      showLoginPage();
+      showLoginView();
     }
 
     if (window.supabaseClient?.auth?.onAuthStateChange) {
