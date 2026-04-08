@@ -1,4 +1,18 @@
 window.StorageManager = (() => {
+  function withTimeout(promise, ms = 20000, message = "操作逾時") {
+    let timerId;
+
+    const timeoutPromise = new Promise((_, reject) => {
+      timerId = setTimeout(() => {
+        reject(new Error(message));
+      }, ms);
+    });
+
+    return Promise.race([promise, timeoutPromise]).finally(() => {
+      clearTimeout(timerId);
+    });
+  }
+
   async function getCurrentUser() {
     const {
       data: { user },
@@ -112,26 +126,32 @@ window.StorageManager = (() => {
     if (error) throw error;
   }
 
-  async function updateProfile({ name, gender, email, password }) {
-    const payload = {
+  async function updateProfile({ name, gender, email }) {
+    const { data, error } = await window.supabaseClient.auth.updateUser({
       email,
       data: {
         display_name: name,
         gender
       }
-    };
+    });
 
-    if (password) {
-      payload.password = password;
-    }
+    if (error) throw error;
+    return data;
+  }
 
-    const { data, error } = await window.supabaseClient.auth.updateUser(payload);
+  async function updatePassword(password) {
+    const { data, error } = await window.supabaseClient.auth.updateUser({
+      password
+    });
+
     if (error) throw error;
     return data;
   }
 
   async function uploadImage(file) {
     if (!file) throw new Error("沒有可上傳的圖片檔案");
+    if (!file.type?.startsWith("image/")) throw new Error("只能上傳圖片檔案");
+    if (file.size > 10 * 1024 * 1024) throw new Error("圖片請控制在 10MB 以內");
 
     const user = await getCurrentUser();
     if (!user) throw new Error("尚未登入");
@@ -143,14 +163,18 @@ window.StorageManager = (() => {
 
     const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext || "jpg"}`;
 
-    const { error: uploadError } = await window.supabaseClient
-      .storage
-      .from(window.SUPABASE_CONFIG.bucket)
-      .upload(fileName, file, {
-        cacheControl: "3600",
-        upsert: false,
-        contentType: file.type || "image/jpeg"
-      });
+    const { error: uploadError } = await withTimeout(
+      window.supabaseClient
+        .storage
+        .from(window.SUPABASE_CONFIG.bucket)
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: true,
+          contentType: file.type || "image/jpeg"
+        }),
+      20000,
+      "圖片上傳逾時，請確認 bucket 權限或網路狀態"
+    );
 
     if (uploadError) throw uploadError;
 
@@ -198,6 +222,7 @@ window.StorageManager = (() => {
     deleteItem,
     deleteAllMyItems,
     updateProfile,
+    updatePassword,
     uploadImage,
     exportItems,
     saveTheme,

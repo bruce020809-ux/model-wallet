@@ -9,7 +9,8 @@
     isEditMode: false,
     isSubmitting: false,
     currentUser: null,
-    isProfileSubmitting: false
+    isProfileSubmitting: false,
+    isPasswordSubmitting: false
   };
 
   function generateId() {
@@ -98,13 +99,27 @@
     if (!modal) return;
 
     modal.classList.add("hidden");
-    document.body.style.overflow = "";
+
+    if (!["editorModal", "detailModal", "statsModal", "settingsModal", "profileModal", "passwordModal", "themeModal"].some(modalId => !document.getElementById(modalId)?.classList.contains("hidden"))) {
+      document.body.style.overflow = "";
+    }
 
     if (id === "editorModal") {
       resetEditorState();
     } else {
       scrollModalToTop(id);
     }
+  }
+
+  function closeAllModals() {
+    ["editorModal", "detailModal", "statsModal", "settingsModal", "profileModal", "passwordModal", "themeModal"].forEach(closeModalSilently);
+    document.body.style.overflow = "";
+  }
+
+  function closeModalSilently(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.classList.add("hidden");
   }
 
   function refreshList() {
@@ -213,6 +228,7 @@
     } catch (error) {
       console.error(error);
       alert(`儲存失敗：${error?.message || error}`);
+    } finally {
       state.isSubmitting = false;
       setSubmitButtonLoading(false);
     }
@@ -227,7 +243,17 @@
       return;
     }
 
-    if (!file.type.startsWith("image/")) return;
+    if (!file.type.startsWith("image/")) {
+      alert("請選擇圖片檔案");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert("圖片請控制在 10MB 以內");
+      event.target.value = "";
+      return;
+    }
 
     state.tempFile = file;
 
@@ -281,6 +307,9 @@
     document.getElementById("profileName").value = meta.display_name || "";
     document.getElementById("profileGender").value = meta.gender || "";
     document.getElementById("profileEmail").value = user.email || "";
+  }
+
+  function resetPasswordForm() {
     document.getElementById("profilePassword").value = "";
     document.getElementById("profilePassword2").value = "";
   }
@@ -292,51 +321,62 @@
     const name = document.getElementById("profileName").value.trim();
     const gender = document.getElementById("profileGender").value;
     const email = document.getElementById("profileEmail").value.trim();
-    const password = document.getElementById("profilePassword").value;
-    const password2 = document.getElementById("profilePassword2").value;
 
     if (!name || !gender || !email) {
       alert("姓名、性別、Email 不能空白");
       return;
     }
 
-    if ((password || password2) && password !== password2) {
-      alert("兩次新密碼不一致");
-      return;
-    }
-
-    if (password && password.length < 6) {
-      alert("新密碼至少 6 碼");
-      return;
-    }
-
     state.isProfileSubmitting = true;
 
     try {
-      const updatePayload = {
-        email,
-        data: {
-          display_name: name,
-          gender
-        }
-      };
-
-      if (password) {
-        updatePayload.password = password;
-      }
-
-      const { error } = await window.supabaseClient.auth.updateUser(updatePayload);
-
-      if (error) throw error;
-
-      alert("帳號資訊已更新");
+      await StorageManager.updateProfile({ name, gender, email });
       state.currentUser = await StorageManager.getCurrentUser();
+      await fillProfileForm();
+      alert("個人資料已更新");
       closeModal("profileModal");
     } catch (error) {
       console.error(error);
       alert(`更新失敗：${error?.message || error}`);
     } finally {
       state.isProfileSubmitting = false;
+    }
+  }
+
+  async function savePassword(event) {
+    event.preventDefault();
+    if (state.isPasswordSubmitting) return;
+
+    const password = document.getElementById("profilePassword").value;
+    const password2 = document.getElementById("profilePassword2").value;
+
+    if (!password || !password2) {
+      alert("請輸入新密碼並再次確認");
+      return;
+    }
+
+    if (password !== password2) {
+      alert("兩次新密碼不一致");
+      return;
+    }
+
+    if (password.length < 6) {
+      alert("新密碼至少 6 碼");
+      return;
+    }
+
+    state.isPasswordSubmitting = true;
+
+    try {
+      await StorageManager.updatePassword(password);
+      resetPasswordForm();
+      alert("密碼已更新");
+      closeModal("passwordModal");
+    } catch (error) {
+      console.error(error);
+      alert(`更新失敗：${error?.message || error}`);
+    } finally {
+      state.isPasswordSubmitting = false;
     }
   }
 
@@ -412,18 +452,21 @@
   }
 
   async function logout() {
-    const { error } = await window.supabaseClient.auth.signOut();
-    if (error) {
-      alert(`登出失敗：${error.message}`);
-      return;
+    try {
+      const { error } = await window.supabaseClient.auth.signOut({ scope: "local" });
+      if (error) throw error;
+    } catch (error) {
+      console.error(error);
+    } finally {
+      state.currentUser = null;
+      state.items = [];
+      refreshList();
+      closeAllModals();
+      document.getElementById("loginEmail").value = "";
+      document.getElementById("loginPassword").value = "";
+      showLoginPage();
+      showLoginView();
     }
-
-    state.currentUser = null;
-    state.items = [];
-    refreshList();
-    closeModal("settingsModal");
-    showLoginPage();
-    showLoginView();
   }
 
   function bindCloseButtons() {
@@ -438,6 +481,7 @@
       if (closeType === "stats") closeModal("statsModal");
       if (closeType === "settings") closeModal("settingsModal");
       if (closeType === "profile") closeModal("profileModal");
+      if (closeType === "password") closeModal("passwordModal");
       if (closeType === "theme") closeModal("themeModal");
     });
   }
@@ -515,15 +559,24 @@
     });
 
     document.getElementById("openProfileBtn").addEventListener("click", async () => {
+      closeModal("settingsModal");
       await fillProfileForm();
       openModal("profileModal");
     });
 
+    document.getElementById("openPasswordBtn").addEventListener("click", () => {
+      closeModal("settingsModal");
+      resetPasswordForm();
+      openModal("passwordModal");
+    });
+
     document.getElementById("openThemeBtn").addEventListener("click", () => {
+      closeModal("settingsModal");
       openModal("themeModal");
     });
 
     document.getElementById("profileForm").addEventListener("submit", saveProfile);
+    document.getElementById("passwordForm").addEventListener("submit", savePassword);
 
     document.getElementById("settingsExportBtn").addEventListener("click", () => {
       StorageManager.exportItems(state.items);
@@ -603,6 +656,7 @@
         state.currentUser = null;
         state.items = [];
         refreshList();
+        closeAllModals();
         showLoginPage();
         showLoginView();
       }
