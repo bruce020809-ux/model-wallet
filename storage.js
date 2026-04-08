@@ -1,232 +1,249 @@
-window.UI = (() => {
-  function formatCurrency(value) {
-    const amount = Number(value || 0);
-    return `$${amount.toLocaleString("en-US")}`;
-  }
+window.StorageManager = (() => {
+  function withTimeout(promise, ms = 20000, message = "操作逾時") {
+    let timerId;
 
-  function escapeHtml(text) {
-    return String(text || "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  function getCurrentMonthText() {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, "0");
-    return `${y}-${m}`;
-  }
-
-  function renderTopbar({ userName, appName }) {
-    const subtitleEl = document.getElementById("topbarSubtitle");
-    const titleEl = document.getElementById("topbarTitle");
-
-    if (subtitleEl) {
-      subtitleEl.textContent = `${userName || "使用者"}的模型帳本`;
-    }
-
-    if (titleEl) {
-      titleEl.textContent = appName || "Car Wallet";
-    }
-
-    document.title = appName || "Car Wallet";
-  }
-
-  function renderSummary(items) {
-    const totalCount = items.length;
-    const totalSpent = items.reduce((sum, item) => sum + Number(item.price || 0), 0);
-    const currentMonth = getCurrentMonthText();
-    const monthCount = items.filter(item => (item.purchaseDate || "").startsWith(currentMonth)).length;
-
-    document.getElementById("totalCount").textContent = totalCount;
-    document.getElementById("totalSpent").textContent = formatCurrency(totalSpent);
-    document.getElementById("monthCount").textContent = monthCount;
-  }
-
-  function renderItemList(items, keyword = "", status = "", isEditMode = false) {
-    const itemList = document.getElementById("itemList");
-
-    const filtered = items.filter(item => {
-      const haystack = [
-        item.name,
-        item.brand,
-        item.series,
-        item.purchasePlace,
-        item.notes
-      ].join(" ").toLowerCase();
-
-      const matchKeyword = !keyword || haystack.includes(keyword.toLowerCase());
-      const matchStatus = !status || item.status === status;
-      return matchKeyword && matchStatus;
+    const timeoutPromise = new Promise((_, reject) => {
+      timerId = setTimeout(() => {
+        reject(new Error(message));
+      }, ms);
     });
 
-    if (!filtered.length) {
-      itemList.innerHTML = `
-        <div class="empty-card">
-          <p>目前還沒有模型紀錄</p>
-        </div>
-      `;
-      return;
-    }
-
-    const sorted = [...filtered].sort((a, b) => {
-      const dateA = a.purchaseDate || "";
-      const dateB = b.purchaseDate || "";
-      if (dateA === dateB) return (b.createdAt || 0) - (a.createdAt || 0);
-      return dateB.localeCompare(dateA);
+    return Promise.race([promise, timeoutPromise]).finally(() => {
+      clearTimeout(timerId);
     });
-
-    itemList.innerHTML = sorted.map(item => {
-      const cover = item.image || "";
-      const actionHtml = isEditMode
-        ? `
-          <div class="item-action-row">
-            <button class="secondary-btn" type="button" data-action="edit" data-id="${item.id}">編輯</button>
-            <button class="danger-btn" type="button" data-action="delete" data-id="${item.id}">刪除</button>
-          </div>
-        `
-        : "";
-
-      return `
-        <article class="item-card">
-          <div class="item-cover" data-action="detail" data-id="${item.id}">
-            ${
-              cover
-                ? `<img src="${cover}" alt="${escapeHtml(item.name)}">`
-                : `<div class="item-cover-placeholder">無照片</div>`
-            }
-          </div>
-
-          <div class="item-body">
-            <div class="item-row-top">
-              <h4 class="item-name">${escapeHtml(item.name)}</h4>
-              <p class="item-price">${formatCurrency(item.price)}</p>
-            </div>
-
-            <p class="item-meta">
-              ${escapeHtml(item.brand || "未填品牌")}
-              ${item.series ? `・ ${escapeHtml(item.series)}` : ""}
-            </p>
-
-            <div class="item-info-row">
-              <span>${escapeHtml(item.purchaseDate || "未填日期")}</span>
-              <span>${escapeHtml(item.status || "未填狀態")}</span>
-            </div>
-
-            <p class="item-note">${escapeHtml(item.purchasePlace || "未填購買地點")}</p>
-
-            ${actionHtml}
-          </div>
-        </article>
-      `;
-    }).join("");
   }
 
-  function renderImagePreview(imageDataUrl) {
-    const imagePreview = document.getElementById("imagePreview");
-
-    if (!imageDataUrl) {
-      imagePreview.innerHTML = "";
-      return;
+  async function getCurrentUser() {
+    if (!window.supabaseClient?.auth) {
+      throw new Error("supabaseClient 尚未初始化");
     }
 
-    imagePreview.innerHTML = `
-      <div class="preview-card">
-        <img src="${imageDataUrl}" alt="preview">
-      </div>
-    `;
+    const {
+      data: { user },
+      error
+    } = await window.supabaseClient.auth.getUser();
+
+    if (error) throw error;
+    return user;
   }
 
-  function renderDetail(item) {
-    const detailContent = document.getElementById("detailContent");
-    detailContent.innerHTML = `
-      <h2 class="detail-title">${escapeHtml(item.name)}</h2>
-      <p class="detail-price">${formatCurrency(item.price)}</p>
+  async function getSessionUser() {
+    if (!window.supabaseClient?.auth) {
+      throw new Error("supabaseClient 尚未初始化");
+    }
 
-      ${
-        item.image
-          ? `<div class="detail-image-grid">
-              <div class="detail-image-card">
-                <img src="${item.image}" alt="${escapeHtml(item.name)}">
-              </div>
-            </div>`
-          : `<div class="empty-card"><p>尚未上傳照片</p></div>`
-      }
+    const {
+      data: { session },
+      error
+    } = await window.supabaseClient.auth.getSession();
 
-      <div class="detail-info-list">
-        <div class="detail-row"><span class="detail-label">品牌</span><span class="detail-value">${escapeHtml(item.brand || "未填寫")}</span></div>
-        <div class="detail-row"><span class="detail-label">系列</span><span class="detail-value">${escapeHtml(item.series || "未填寫")}</span></div>
-        <div class="detail-row"><span class="detail-label">購入日期</span><span class="detail-value">${escapeHtml(item.purchaseDate || "未填寫")}</span></div>
-        <div class="detail-row"><span class="detail-label">購買地點</span><span class="detail-value">${escapeHtml(item.purchasePlace || "未填寫")}</span></div>
-        <div class="detail-row"><span class="detail-label">狀態</span><span class="detail-value">${escapeHtml(item.status || "未填寫")}</span></div>
-      </div>
-
-      <div class="notes-card">
-        <h4>備註</h4>
-        <p>${escapeHtml(item.notes || "目前沒有備註")}</p>
-      </div>
-    `;
+    if (error) throw error;
+    return session?.user || null;
   }
 
-  function setEditorMode(isEdit) {
-    document.getElementById("editorTitle").textContent = isEdit ? "編輯模型" : "新增模型";
+  async function getItems() {
+    const user = await getCurrentUser();
+    if (!user) return [];
+
+    const { data, error } = await window.supabaseClient
+      .from("cars")
+      .select("*")
+      .eq("owner_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map(row => ({
+      id: row.id,
+      name: row.name,
+      brand: row.brand || "",
+      series: row.series || "",
+      price: row.price || 0,
+      purchaseDate: row.purchase_date || "",
+      purchasePlace: row.purchase_place || "",
+      status: row.status || "",
+      notes: row.notes || "",
+      image: row.image_url || "",
+      createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now()
+    }));
   }
 
-  function fillForm(item) {
-    document.getElementById("itemId").value = item?.id || "";
-    document.getElementById("nameInput").value = item?.name || "";
-    document.getElementById("brandInput").value = item?.brand || "";
-    document.getElementById("seriesInput").value = item?.series || "";
-    document.getElementById("priceInput").value = item?.price || 0;
-    document.getElementById("dateInput").value = item?.purchaseDate || "";
-    document.getElementById("placeInput").value = item?.purchasePlace || "";
-    document.getElementById("statusInput").value = item?.status || "";
-    document.getElementById("notesInput").value = item?.notes || "";
-    document.getElementById("imageInput").value = "";
-    renderImagePreview(item?.image || "");
-  }
+  async function saveItem(item) {
+    const user = await getCurrentUser();
+    if (!user) throw new Error("尚未登入");
 
-  function resetForm() {
-    fillForm(null);
-  }
-
-  function applyTheme(theme) {
-    const root = document.documentElement;
-
-    const finalTheme = {
-      bg: theme?.bg || "#D0E7D2",
-      panel: theme?.panel || "#B0D9B1",
-      panel2: theme?.panel2 || "#79AC78",
-      text: theme?.text || "#1F2A1F",
-      muted: theme?.muted || "#5A6F5A",
-      accent: theme?.accent || "#618263",
-      accentText: theme?.accentText || "#FFFFFF",
-      danger: theme?.danger || "#C84B4B"
+    const payload = {
+      id: item.id,
+      owner_id: user.id,
+      name: item.name,
+      brand: item.brand,
+      series: item.series,
+      price: item.price,
+      purchase_date: item.purchaseDate || null,
+      purchase_place: item.purchasePlace,
+      status: item.status,
+      notes: item.notes,
+      image_url: item.image || null
     };
 
-    root.style.setProperty("--bg", finalTheme.bg);
-    root.style.setProperty("--panel", finalTheme.panel);
-    root.style.setProperty("--panel-2", finalTheme.panel2);
-    root.style.setProperty("--text", finalTheme.text);
-    root.style.setProperty("--muted", finalTheme.muted);
-    root.style.setProperty("--accent", finalTheme.accent);
-    root.style.setProperty("--accent-text", finalTheme.accentText);
-    root.style.setProperty("--danger", finalTheme.danger);
+    const { data, error } = await window.supabaseClient
+      .from("cars")
+      .upsert(payload)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      id: data.id,
+      name: data.name,
+      brand: data.brand || "",
+      series: data.series || "",
+      price: data.price || 0,
+      purchaseDate: data.purchase_date || "",
+      purchasePlace: data.purchase_place || "",
+      status: data.status || "",
+      notes: data.notes || "",
+      image: data.image_url || "",
+      createdAt: data.created_at ? new Date(data.created_at).getTime() : Date.now()
+    };
+  }
+
+  async function deleteItem(id) {
+    const user = await getCurrentUser();
+    if (!user) throw new Error("尚未登入");
+
+    const { error } = await window.supabaseClient
+      .from("cars")
+      .delete()
+      .eq("id", id)
+      .eq("owner_id", user.id);
+
+    if (error) throw error;
+  }
+
+  async function deleteAllMyItems() {
+    const user = await getCurrentUser();
+    if (!user) throw new Error("尚未登入");
+
+    const { error } = await window.supabaseClient
+      .from("cars")
+      .delete()
+      .eq("owner_id", user.id);
+
+    if (error) throw error;
+  }
+
+  async function updateProfile({ name, gender, email }) {
+    const { data, error } = await window.supabaseClient.auth.updateUser({
+      email,
+      data: {
+        display_name: name,
+        gender
+      }
+    });
+
+    if (error) throw error;
+    return data;
+  }
+
+  async function updatePassword(password) {
+    const { data, error } = await window.supabaseClient.auth.updateUser({
+      password
+    });
+
+    if (error) throw error;
+    return data;
+  }
+
+  async function uploadImage(file) {
+    if (!file) throw new Error("沒有可上傳的圖片檔案");
+    if (!file.type?.startsWith("image/")) throw new Error("只能上傳圖片檔案");
+    if (file.size > 10 * 1024 * 1024) throw new Error("圖片請控制在 10MB 以內");
+
+    const user = await getCurrentUser();
+    if (!user) throw new Error("尚未登入");
+
+    const originalName = file.name || "image.jpg";
+    const ext = originalName.includes(".")
+      ? originalName.split(".").pop().toLowerCase()
+      : "jpg";
+
+    const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext || "jpg"}`;
+
+    const { error: uploadError } = await withTimeout(
+      window.supabaseClient
+        .storage
+        .from(window.SUPABASE_CONFIG.bucket)
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: true,
+          contentType: file.type || "image/jpeg"
+        }),
+      20000,
+      "圖片上傳逾時，請確認 bucket 權限或網路狀態"
+    );
+
+    if (uploadError) throw uploadError;
+
+    const { data } = window.supabaseClient
+      .storage
+      .from(window.SUPABASE_CONFIG.bucket)
+      .getPublicUrl(fileName);
+
+    if (!data?.publicUrl) {
+      throw new Error("取得圖片公開網址失敗");
+    }
+
+    return data.publicUrl;
+  }
+
+  function exportItems(items) {
+    const blob = new Blob([JSON.stringify(items, null, 2)], {
+      type: "application/json"
+    });
+
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "car-wallet-backup.json";
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+
+  function saveTheme(themeObject) {
+    localStorage.setItem("car-wallet-theme-v5", JSON.stringify(themeObject));
+  }
+
+  function getTheme() {
+    try {
+      return JSON.parse(localStorage.getItem("car-wallet-theme-v5") || "null");
+    } catch {
+      return null;
+    }
+  }
+
+  function saveAppName(name) {
+    localStorage.setItem("car-wallet-app-name", name || "Car Wallet");
+  }
+
+  function getAppName() {
+    return localStorage.getItem("car-wallet-app-name") || "Car Wallet";
   }
 
   return {
-    formatCurrency,
-    renderTopbar,
-    renderSummary,
-    renderItemList,
-    renderImagePreview,
-    renderDetail,
-    setEditorMode,
-    fillForm,
-    resetForm,
-    applyTheme
+    getCurrentUser,
+    getSessionUser,
+    getItems,
+    saveItem,
+    deleteItem,
+    deleteAllMyItems,
+    updateProfile,
+    updatePassword,
+    uploadImage,
+    exportItems,
+    saveTheme,
+    getTheme,
+    saveAppName,
+    getAppName
   };
 })();
