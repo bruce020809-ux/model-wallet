@@ -7,7 +7,6 @@
 
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#111827">
-
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Car Wallet">
@@ -17,7 +16,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <!-- 登入 / 註冊 -->
   <div id="loginPage" class="auth-shell hidden">
     <div class="auth-card">
       <div id="loginView">
@@ -40,14 +38,12 @@
         <p class="auth-subtitle">建立你的私人收藏帳本</p>
 
         <input id="signupName" class="form-input auth-input" type="text" placeholder="姓名">
-
         <select id="signupGender" class="form-input auth-input">
           <option value="">選擇性別</option>
           <option value="male">男</option>
           <option value="female">女</option>
           <option value="other">其他</option>
         </select>
-
         <input id="signupEmail" class="form-input auth-input" type="email" placeholder="Email">
         <input id="signupPassword" class="form-input auth-input" type="password" placeholder="密碼">
         <input id="signupPassword2" class="form-input auth-input" type="password" placeholder="確認密碼">
@@ -64,14 +60,12 @@
     </div>
   </div>
 
-  <!-- 主 App -->
   <div id="appRoot" class="app-shell hidden">
     <header class="topbar safe-top">
       <div>
         <p class="topbar-subtitle">我的模型帳本</p>
         <h1 class="topbar-title">Car Wallet</h1>
       </div>
-
       <div class="topbar-actions">
         <button class="icon-button" id="settingsBtn" type="button" aria-label="設定">⚙</button>
         <button class="icon-button" id="addBtn" type="button" aria-label="新增">＋</button>
@@ -82,7 +76,6 @@
       <section class="summary-card clickable-card" id="summaryCard">
         <p class="summary-label">收藏總覽</p>
         <h2 class="summary-title">模型記錄</h2>
-
         <div class="summary-grid">
           <div class="summary-item">
             <p class="summary-item-label">收藏總數</p>
@@ -97,18 +90,10 @@
             <p class="summary-item-value" id="monthCount">0</p>
           </div>
         </div>
-
-        <p class="install-hint">iPhone：Safari 開啟後 → 分享 → 加入主畫面</p>
       </section>
 
       <section class="toolbar-card">
-        <input
-          id="searchInput"
-          class="search-input"
-          type="text"
-          placeholder="搜尋名稱、品牌、備註"
-        >
-
+        <input id="searchInput" class="search-input" type="text" placeholder="搜尋名稱、品牌、備註">
         <select id="statusFilter" class="filter-select">
           <option value="">全部狀態</option>
           <option value="全新">全新</option>
@@ -123,13 +108,11 @@
           <h3>模型列表</h3>
           <button class="text-button" id="toggleEditBtn" type="button">編輯</button>
         </div>
-
         <div id="itemList" class="item-list"></div>
       </section>
     </main>
   </div>
 
-  <!-- 新增 / 編輯 -->
   <div class="modal hidden" id="editorModal">
     <div class="modal-backdrop" data-close="editor"></div>
     <div class="modal-panel">
@@ -180,7 +163,6 @@
     </div>
   </div>
 
-  <!-- 詳情 -->
   <div class="modal hidden" id="detailModal">
     <div class="modal-backdrop" data-close="detail"></div>
     <div class="modal-panel detail-modal-panel">
@@ -192,7 +174,6 @@
     </div>
   </div>
 
-  <!-- 統計 -->
   <div class="modal hidden" id="statsModal">
     <div class="modal-backdrop" data-close="stats"></div>
     <div class="modal-panel detail-modal-panel" id="statsModalPanel">
@@ -205,12 +186,10 @@
         <h4 class="stats-title">各品牌佔比</h4>
         <canvas id="brandChart"></canvas>
       </div>
-
       <div class="stats-section">
         <h4 class="stats-title">每月花費</h4>
         <canvas id="monthChart"></canvas>
       </div>
-
       <div class="stats-section">
         <h4 class="stats-title">各品牌花費</h4>
         <div id="brandSpendList" class="stats-list"></div>
@@ -218,7 +197,6 @@
     </div>
   </div>
 
-  <!-- 主設定 -->
   <div class="modal hidden" id="settingsModal">
     <div class="modal-backdrop" data-close="settings"></div>
     <div class="modal-panel">
@@ -229,41 +207,32 @@
 
       <div class="settings-menu">
         <button id="openProfileBtn" class="settings-menu-item" type="button">
-          <div>
-            <div class="settings-menu-title">編輯帳號資訊</div>
-            <div class="settings-menu-subtitle">姓名、性別、Email、密碼</div>
-          </div>
-          <span>›</span>
+          <div><div class="settings-menu-title">編輯帳號資訊</div><div class="settings-menu-subtitle">姓名、性別、Email、密碼</div></div><span>›</span>
         </button>
 
         <button id="openThemeBtn" class="settings-menu-item" type="button">
-          <div>
-            <div class="settings-menu-title">主題顏色</div>
-            <div class="settings-menu-subtitle">調整頁面與按鈕配色</div>
-          </div>
-          <span>›</span>
+          <div><div class="settings-menu-title">主題顏色</div><div class="settings-menu-subtitle">調整頁面與按鈕配色</div></div><span>›</span>
         </button>
 
         <button id="settingsExportBtn" class="settings-menu-item" type="button">
-          <div>
-            <div class="settings-menu-title">匯出備份</div>
-            <div class="settings-menu-subtitle">下載目前收藏資料</div>
-          </div>
-          <span>↓</span>
+          <div><div class="settings-menu-title">匯出備份</div><div class="settings-menu-subtitle">下載目前收藏資料</div></div><span>↓</span>
+        </button>
+
+        <button id="deleteMyDataBtn" class="settings-menu-item settings-danger-item" type="button">
+          <div><div class="settings-menu-title">刪除我的收藏資料</div><div class="settings-menu-subtitle">只刪模型資料，不刪登入帳號</div></div><span>×</span>
+        </button>
+
+        <button id="deleteAccountBtn" class="settings-menu-item settings-danger-item" type="button">
+          <div><div class="settings-menu-title">刪除帳號</div><div class="settings-menu-subtitle">先刪收藏並登出；Auth 帳號需後端或後台刪除</div></div><span>!</span>
         </button>
 
         <button id="logoutBtn" class="settings-menu-item settings-danger-item" type="button">
-          <div>
-            <div class="settings-menu-title">登出帳號</div>
-            <div class="settings-menu-subtitle">回到登入畫面</div>
-          </div>
-          <span>↩</span>
+          <div><div class="settings-menu-title">登出帳號</div><div class="settings-menu-subtitle">回到登入畫面</div></div><span>↩</span>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- 帳號資訊 -->
   <div class="modal hidden" id="profileModal">
     <div class="modal-backdrop" data-close="profile"></div>
     <div class="modal-panel">
@@ -274,7 +243,7 @@
 
       <form id="profileForm" class="form-grid">
         <label class="form-label" for="profileName">姓名</label>
-        <input id="profileName" class="form-input" type="text" placeholder="姓名">
+        <input id="profileName" class="form-input" type="text">
 
         <label class="form-label" for="profileGender">性別</label>
         <select id="profileGender" class="form-input">
@@ -285,7 +254,7 @@
         </select>
 
         <label class="form-label" for="profileEmail">Email</label>
-        <input id="profileEmail" class="form-input" type="email" placeholder="Email">
+        <input id="profileEmail" class="form-input" type="email">
 
         <label class="form-label" for="profilePassword">新密碼</label>
         <input id="profilePassword" class="form-input" type="password" placeholder="不修改可留白">
@@ -298,7 +267,6 @@
     </div>
   </div>
 
-  <!-- 主題顏色 -->
   <div class="modal hidden" id="themeModal">
     <div class="modal-backdrop" data-close="theme"></div>
     <div class="modal-panel">
@@ -309,28 +277,28 @@
 
       <div class="form-grid">
         <label class="form-label" for="themeBgInput">頁面底色</label>
-        <input id="themeBgInput" class="form-input color-input compact-color" type="color" value="#0b1020">
+        <input id="themeBgInput" class="form-input color-input compact-color" type="color">
 
         <label class="form-label" for="themePanelInput">卡片底色</label>
-        <input id="themePanelInput" class="form-input color-input compact-color" type="color" value="#121a2b">
+        <input id="themePanelInput" class="form-input color-input compact-color" type="color">
 
         <label class="form-label" for="themePanel2Input">次要區塊色</label>
-        <input id="themePanel2Input" class="form-input color-input compact-color" type="color" value="#1a2438">
+        <input id="themePanel2Input" class="form-input color-input compact-color" type="color">
 
         <label class="form-label" for="themeTextInput">主要文字色</label>
-        <input id="themeTextInput" class="form-input color-input compact-color" type="color" value="#f3f4f6">
+        <input id="themeTextInput" class="form-input color-input compact-color" type="color">
 
         <label class="form-label" for="themeMutedInput">次要文字色</label>
-        <input id="themeMutedInput" class="form-input color-input compact-color" type="color" value="#94a3b8">
+        <input id="themeMutedInput" class="form-input color-input compact-color" type="color">
 
         <label class="form-label" for="themeAccentInput">主色</label>
-        <input id="themeAccentInput" class="form-input color-input compact-color" type="color" value="#8b5cf6">
+        <input id="themeAccentInput" class="form-input color-input compact-color" type="color">
 
         <label class="form-label" for="themeAccentTextInput">主色文字</label>
-        <input id="themeAccentTextInput" class="form-input color-input compact-color" type="color" value="#ffffff">
+        <input id="themeAccentTextInput" class="form-input color-input compact-color" type="color">
 
         <label class="form-label" for="themeDangerInput">危險按鈕色</label>
-        <input id="themeDangerInput" class="form-input color-input compact-color" type="color" value="#ef4444">
+        <input id="themeDangerInput" class="form-input color-input compact-color" type="color">
       </div>
     </div>
   </div>

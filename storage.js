@@ -5,11 +5,7 @@ window.StorageManager = (() => {
       error
     } = await window.supabaseClient.auth.getUser();
 
-    if (error) {
-      console.error("取得使用者失敗:", error);
-      throw error;
-    }
-
+    if (error) throw error;
     return user;
   }
 
@@ -19,11 +15,7 @@ window.StorageManager = (() => {
       error
     } = await window.supabaseClient.auth.getSession();
 
-    if (error) {
-      console.error("取得 session 失敗:", error);
-      throw error;
-    }
-
+    if (error) throw error;
     return session?.user || null;
   }
 
@@ -37,10 +29,7 @@ window.StorageManager = (() => {
       .eq("owner_id", user.id)
       .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("讀取 cars 失敗:", error);
-      throw error;
-    }
+    if (error) throw error;
 
     return (data || []).map(row => ({
       id: row.id,
@@ -75,14 +64,27 @@ window.StorageManager = (() => {
       image_url: item.image || null
     };
 
-    const { error } = await window.supabaseClient
+    const { data, error } = await window.supabaseClient
       .from("cars")
-      .upsert(payload);
+      .upsert(payload)
+      .select()
+      .single();
 
-    if (error) {
-      console.error("儲存 car 失敗:", error);
-      throw error;
-    }
+    if (error) throw error;
+
+    return {
+      id: data.id,
+      name: data.name,
+      brand: data.brand || "",
+      series: data.series || "",
+      price: data.price || 0,
+      purchaseDate: data.purchase_date || "",
+      purchasePlace: data.purchase_place || "",
+      status: data.status || "",
+      notes: data.notes || "",
+      image: data.image_url || "",
+      createdAt: data.created_at ? new Date(data.created_at).getTime() : Date.now()
+    };
   }
 
   async function deleteItem(id) {
@@ -95,16 +97,41 @@ window.StorageManager = (() => {
       .eq("id", id)
       .eq("owner_id", user.id);
 
-    if (error) {
-      console.error("刪除 car 失敗:", error);
-      throw error;
+    if (error) throw error;
+  }
+
+  async function deleteAllMyItems() {
+    const user = await getCurrentUser();
+    if (!user) throw new Error("尚未登入");
+
+    const { error } = await window.supabaseClient
+      .from("cars")
+      .delete()
+      .eq("owner_id", user.id);
+
+    if (error) throw error;
+  }
+
+  async function updateProfile({ name, gender, email, password }) {
+    const payload = {
+      email,
+      data: {
+        display_name: name,
+        gender
+      }
+    };
+
+    if (password) {
+      payload.password = password;
     }
+
+    const { data, error } = await window.supabaseClient.auth.updateUser(payload);
+    if (error) throw error;
+    return data;
   }
 
   async function uploadImage(file) {
-    if (!file) {
-      throw new Error("沒有可上傳的圖片檔案");
-    }
+    if (!file) throw new Error("沒有可上傳的圖片檔案");
 
     const user = await getCurrentUser();
     if (!user) throw new Error("尚未登入");
@@ -125,10 +152,7 @@ window.StorageManager = (() => {
         contentType: file.type || "image/jpeg"
       });
 
-    if (uploadError) {
-      console.error("上傳圖片失敗:", uploadError);
-      throw uploadError;
-    }
+    if (uploadError) throw uploadError;
 
     const { data } = window.supabaseClient
       .storage
@@ -151,19 +175,17 @@ window.StorageManager = (() => {
     link.href = URL.createObjectURL(blob);
     link.download = "car-wallet-backup.json";
     link.click();
-
     URL.revokeObjectURL(link.href);
   }
 
   function saveTheme(themeObject) {
-    localStorage.setItem("car-wallet-theme-v4", JSON.stringify(themeObject));
+    localStorage.setItem("car-wallet-theme-v5", JSON.stringify(themeObject));
   }
 
   function getTheme() {
     try {
-      return JSON.parse(localStorage.getItem("car-wallet-theme-v4") || "null");
-    } catch (error) {
-      console.error("讀取 theme 失敗:", error);
+      return JSON.parse(localStorage.getItem("car-wallet-theme-v5") || "null");
+    } catch {
       return null;
     }
   }
@@ -174,6 +196,8 @@ window.StorageManager = (() => {
     getItems,
     saveItem,
     deleteItem,
+    deleteAllMyItems,
+    updateProfile,
     uploadImage,
     exportItems,
     saveTheme,
