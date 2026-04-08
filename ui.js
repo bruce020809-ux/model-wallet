@@ -20,6 +20,21 @@ window.UI = (() => {
     return `${y}-${m}`;
   }
 
+  function renderTopbar({ userName, appName }) {
+    const subtitleEl = document.getElementById("topbarSubtitle");
+    const titleEl = document.getElementById("topbarTitle");
+
+    if (subtitleEl) {
+      subtitleEl.textContent = `${userName || "使用者"}的模型帳本`;
+    }
+
+    if (titleEl) {
+      titleEl.textContent = appName || "Car Wallet";
+    }
+
+    document.title = appName || "Car Wallet";
+  }
+
   function renderSummary(items) {
     const totalCount = items.length;
     const totalSpent = items.reduce((sum, item) => sum + Number(item.price || 0), 0);
@@ -200,26 +215,11 @@ window.UI = (() => {
     root.style.setProperty("--accent", finalTheme.accent);
     root.style.setProperty("--accent-text", finalTheme.accentText);
     root.style.setProperty("--danger", finalTheme.danger);
-
-    const map = {
-      themeBgInput: finalTheme.bg,
-      themePanelInput: finalTheme.panel,
-      themePanel2Input: finalTheme.panel2,
-      themeTextInput: finalTheme.text,
-      themeMutedInput: finalTheme.muted,
-      themeAccentInput: finalTheme.accent,
-      themeAccentTextInput: finalTheme.accentText,
-      themeDangerInput: finalTheme.danger
-    };
-
-    Object.entries(map).forEach(([id, value]) => {
-      const input = document.getElementById(id);
-      if (input) input.value = value;
-    });
   }
 
   return {
     formatCurrency,
+    renderTopbar,
     renderSummary,
     renderItemList,
     renderImagePreview,

@@ -10,7 +10,66 @@
     isSubmitting: false,
     currentUser: null,
     isProfileSubmitting: false,
-    isPasswordSubmitting: false
+    isPasswordSubmitting: false,
+    isAppNameSubmitting: false
+  };
+
+  const THEMES = {
+    purple: {
+      name: "Dark Purple",
+      bg: "#0b1020",
+      panel: "#121a2b",
+      panel2: "#1a2438",
+      text: "#f3f4f6",
+      muted: "#94a3b8",
+      accent: "#8b5cf6",
+      accentText: "#ffffff",
+      danger: "#ef4444"
+    },
+    blue: {
+      name: "Midnight Blue",
+      bg: "#0a0f1c",
+      panel: "#111827",
+      panel2: "#1e293b",
+      text: "#e5e7eb",
+      muted: "#9ca3af",
+      accent: "#3b82f6",
+      accentText: "#ffffff",
+      danger: "#ef4444"
+    },
+    green: {
+      name: "Emerald",
+      bg: "#07130f",
+      panel: "#0f1f19",
+      panel2: "#15332a",
+      text: "#ecfdf5",
+      muted: "#6ee7b7",
+      accent: "#10b981",
+      accentText: "#ffffff",
+      danger: "#ef4444"
+    },
+    orange: {
+      name: "Sunset",
+      bg: "#140d07",
+      panel: "#1f140c",
+      panel2: "#2b1d12",
+      text: "#fff7ed",
+      muted: "#fdba74",
+      accent: "#f97316",
+      accentText: "#ffffff",
+      danger: "#ef4444"
+    },
+    black: {
+      name: "Mono Black",
+      bg: "#000000",
+      panel: "#111111",
+      panel2: "#1a1a1a",
+      text: "#f5f5f5",
+      muted: "#a3a3a3",
+      accent: "#ffffff",
+      accentText: "#000000",
+      danger: "#ef4444"
+    }
   };
 
   function generateId() {
@@ -79,7 +138,8 @@
       "settingsModal",
       "profileModal",
       "passwordModal",
-      "themeModal"
+      "themeModal",
+      "appNameModal"
     ].some(id => {
       const modal = document.getElementById(id);
       return modal && !modal.classList.contains("hidden");
@@ -140,7 +200,8 @@
       "settingsModal",
       "profileModal",
       "passwordModal",
-      "themeModal"
+      "themeModal",
+      "appNameModal"
     ].forEach(closeModalSilently);
 
     document.body.style.overflow = "";
@@ -169,6 +230,18 @@
     if (toggleBtn) {
       toggleBtn.textContent = state.isEditMode ? "完成" : "編輯";
     }
+  }
+
+  function getDisplayName() {
+    const meta = state.currentUser?.user_metadata || {};
+    return meta.display_name || "使用者";
+  }
+
+  function refreshTopbar() {
+    UI.renderTopbar({
+      userName: getDisplayName(),
+      appName: StorageManager.getAppName()
+    });
   }
 
   function findItem(id) {
@@ -345,6 +418,10 @@
     document.getElementById("profileEmail").value = user.email || "";
   }
 
+  function fillAppNameForm() {
+    document.getElementById("appNameInput").value = StorageManager.getAppName();
+  }
+
   function resetPasswordForm() {
     document.getElementById("profilePassword").value = "";
     document.getElementById("profilePassword2").value = "";
@@ -373,6 +450,7 @@
     try {
       await StorageManager.updateProfile({ name, gender, email });
       state.currentUser = await StorageManager.getCurrentUser();
+      refreshTopbar();
       await fillProfileForm();
       alert("個人資料已更新");
       returnToSettings("profileModal");
@@ -430,6 +508,46 @@
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.textContent = "儲存新密碼";
+      }
+    }
+  }
+
+  function saveAppName(event) {
+    event.preventDefault();
+    if (state.isAppNameSubmitting) return;
+
+    const submitBtn = document.querySelector("#appNameForm button[type='submit']");
+    const appName = document.getElementById("appNameInput").value.trim();
+
+    if (!appName) {
+      alert("名稱不能空白");
+      return;
+    }
+
+    if (appName.length > 30) {
+      alert("名稱請控制在 30 字內");
+      return;
+    }
+
+    state.isAppNameSubmitting = true;
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "儲存中...";
+    }
+
+    try {
+      StorageManager.saveAppName(appName);
+      refreshTopbar();
+      alert("名稱已更新");
+      returnToSettings("appNameModal");
+    } catch (error) {
+      console.error(error);
+      alert(`更新失敗：${error?.message || error}`);
+    } finally {
+      state.isAppNameSubmitting = false;
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "儲存名稱";
       }
     }
   }
@@ -515,7 +633,6 @@
     try {
       await window.supabaseClient.auth.signOut();
 
-      // 強制清掉可能殘留的 supabase session
       Object.keys(localStorage).forEach(key => {
         if (key.startsWith("sb-")) {
           localStorage.removeItem(key);
@@ -541,6 +658,7 @@
       state.isSubmitting = false;
       state.isProfileSubmitting = false;
       state.isPasswordSubmitting = false;
+      state.isAppNameSubmitting = false;
 
       refreshList();
       closeAllModals();
@@ -557,6 +675,63 @@
     }
   }
 
+  function applyThemeByKey(themeKey) {
+    const theme = THEMES[themeKey];
+    if (!theme) return;
+
+    UI.applyTheme(theme);
+    StorageManager.saveTheme(theme);
+    updateThemeSelection(themeKey);
+  }
+
+  function isSameTheme(savedTheme, targetTheme) {
+    if (!savedTheme || !targetTheme) return false;
+
+    return (
+      savedTheme.bg === targetTheme.bg &&
+      savedTheme.panel === targetTheme.panel &&
+      savedTheme.panel2 === targetTheme.panel2 &&
+      savedTheme.text === targetTheme.text &&
+      savedTheme.muted === targetTheme.muted &&
+      savedTheme.accent === targetTheme.accent &&
+      savedTheme.accentText === targetTheme.accentText &&
+      savedTheme.danger === targetTheme.danger
+    );
+  }
+
+  function getCurrentThemeKey() {
+    const savedTheme = StorageManager.getTheme();
+
+    for (const [key, theme] of Object.entries(THEMES)) {
+      if (isSameTheme(savedTheme, theme)) {
+        return key;
+      }
+    }
+
+    return "purple";
+  }
+
+  function updateThemeSelection(selectedKey) {
+    document.querySelectorAll(".theme-option").forEach(btn => {
+      const isActive = btn.dataset.theme === selectedKey;
+      btn.classList.toggle("active", isActive);
+
+      const badge = btn.querySelector(".theme-selected-badge");
+      if (badge) {
+        badge.textContent = isActive ? "使用中" : "";
+      }
+    });
+  }
+
+  function bindThemePresetEvents() {
+    document.querySelectorAll(".theme-option").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const themeKey = btn.dataset.theme;
+        applyThemeByKey(themeKey);
+      });
+    });
+  }
+
   function bindCloseButtons() {
     document.addEventListener("click", event => {
       const closeType = event.target.dataset.close;
@@ -565,55 +740,17 @@
       if (state.isSubmitting && closeType === "editor") return;
       if (state.isProfileSubmitting && closeType === "profile") return;
       if (state.isPasswordSubmitting && closeType === "password") return;
+      if (state.isAppNameSubmitting && closeType === "appname") return;
 
       if (closeType === "editor") closeModal("editorModal");
       if (closeType === "detail") closeModal("detailModal");
       if (closeType === "stats") closeModal("statsModal");
       if (closeType === "settings") closeModal("settingsModal");
 
-      if (closeType === "profile") {
-        returnToSettings("profileModal");
-      }
-
-      if (closeType === "password") {
-        returnToSettings("passwordModal");
-      }
-
-      if (closeType === "theme") {
-        returnToSettings("themeModal");
-      }
-    });
-  }
-
-  function bindThemeInputs() {
-    [
-      "themeBgInput",
-      "themePanelInput",
-      "themePanel2Input",
-      "themeTextInput",
-      "themeMutedInput",
-      "themeAccentInput",
-      "themeAccentTextInput",
-      "themeDangerInput"
-    ].forEach(id => {
-      const input = document.getElementById(id);
-      if (!input) return;
-
-      input.addEventListener("input", () => {
-        const theme = {
-          bg: document.getElementById("themeBgInput").value,
-          panel: document.getElementById("themePanelInput").value,
-          panel2: document.getElementById("themePanel2Input").value,
-          text: document.getElementById("themeTextInput").value,
-          muted: document.getElementById("themeMutedInput").value,
-          accent: document.getElementById("themeAccentInput").value,
-          accentText: document.getElementById("themeAccentTextInput").value,
-          danger: document.getElementById("themeDangerInput").value
-        };
-
-        UI.applyTheme(theme);
-        StorageManager.saveTheme(theme);
-      });
+      if (closeType === "profile") returnToSettings("profileModal");
+      if (closeType === "password") returnToSettings("passwordModal");
+      if (closeType === "theme") returnToSettings("themeModal");
+      if (closeType === "appname") returnToSettings("appNameModal");
     });
   }
 
@@ -673,11 +810,18 @@
     });
 
     document.getElementById("openThemeBtn").addEventListener("click", () => {
+      updateThemeSelection(getCurrentThemeKey());
       switchToChildModal("themeModal");
+    });
+
+    document.getElementById("openAppNameBtn").addEventListener("click", () => {
+      fillAppNameForm();
+      switchToChildModal("appNameModal");
     });
 
     document.getElementById("profileForm").addEventListener("submit", saveProfile);
     document.getElementById("passwordForm").addEventListener("submit", savePassword);
+    document.getElementById("appNameForm").addEventListener("submit", saveAppName);
 
     document.getElementById("settingsExportBtn").addEventListener("click", () => {
       StorageManager.exportItems(state.items);
@@ -685,7 +829,7 @@
 
     document.getElementById("logoutBtn").addEventListener("click", logout);
 
-    bindThemeInputs();
+    bindThemePresetEvents();
     bindCloseButtons();
   }
 
@@ -698,17 +842,10 @@
 
   function applySavedTheme() {
     const savedTheme = StorageManager.getTheme();
+    const fallbackTheme = THEMES.purple;
 
-    UI.applyTheme(savedTheme || {
-      bg: "#0b1020",
-      panel: "#121a2b",
-      panel2: "#1a2438",
-      text: "#f3f4f6",
-      muted: "#94a3b8",
-      accent: "#8b5cf6",
-      accentText: "#ffffff",
-      danger: "#ef4444"
-    });
+    UI.applyTheme(savedTheme || fallbackTheme);
+    updateThemeSelection(getCurrentThemeKey());
   }
 
   function registerServiceWorker() {
@@ -734,6 +871,7 @@
 
     showAppPage();
     applySavedTheme();
+    refreshTopbar();
     await reloadItems();
   }
 
@@ -753,6 +891,7 @@
     window.supabaseClient.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         state.currentUser = session.user;
+        refreshTopbar();
       } else {
         state.currentUser = null;
       }

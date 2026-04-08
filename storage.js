@@ -214,18 +214,27 @@ window.StorageManager = (() => {
     }
   }
 
-  return {
-    getCurrentUser,
-    getSessionUser,
-    getItems,
-    saveItem,
-    deleteItem,
-    deleteAllMyItems,
-    updateProfile,
-    updatePassword,
-    uploadImage,
-    exportItems,
-    saveTheme,
-    getTheme
-  };
+  function saveAppName(name) {
+  localStorage.setItem("car-wallet-app-name", name || "Car Wallet");
+}
+
+function getAppName() {
+  return localStorage.getItem("car-wallet-app-name") || "Car Wallet";
+}
+return {
+  getCurrentUser,
+  getSessionUser,
+  getItems,
+  saveItem,
+  deleteItem,
+  deleteAllMyItems,
+  updateProfile,
+  updatePassword,
+  uploadImage,
+  exportItems,
+  saveTheme,
+  getTheme,
+  saveAppName,
+  getAppName
+};
 })();

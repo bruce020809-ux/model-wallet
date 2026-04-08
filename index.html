@@ -63,8 +63,8 @@
   <div id="appRoot" class="app-shell hidden">
     <header class="topbar safe-top">
       <div>
-        <p class="topbar-subtitle">我的模型帳本</p>
-        <h1 class="topbar-title">Car Wallet</h1>
+        <p class="topbar-subtitle" id="topbarSubtitle">我的模型帳本</p>
+        <h1 class="topbar-title" id="topbarTitle">Car Wallet</h1>
       </div>
       <div class="topbar-actions">
         <button class="icon-button" id="settingsBtn" type="button" aria-label="設定">⚙</button>
@@ -222,10 +222,18 @@
           <span>›</span>
         </button>
 
+        <button id="openAppNameBtn" class="settings-menu-item" type="button">
+          <div>
+            <div class="settings-menu-title">更換帳本名稱</div>
+            <div class="settings-menu-subtitle">修改首頁顯示的 Car Wallet</div>
+          </div>
+          <span>›</span>
+        </button>
+
         <button id="openThemeBtn" class="settings-menu-item" type="button">
           <div>
-            <div class="settings-menu-title">主題顏色</div>
-            <div class="settings-menu-subtitle">調整頁面與按鈕配色</div>
+            <div class="settings-menu-title">主題樣式</div>
+            <div class="settings-menu-subtitle">5種精選主題配色</div>
           </div>
           <span>›</span>
         </button>
@@ -297,38 +305,96 @@
     </div>
   </div>
 
+  <div class="modal hidden" id="appNameModal">
+    <div class="modal-backdrop" data-close="appname"></div>
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h3>更換帳本名稱</h3>
+        <button class="close-button" data-close="appname" type="button">✕</button>
+      </div>
+
+      <form id="appNameForm" class="form-grid">
+        <label class="form-label" for="appNameInput">帳本名稱</label>
+        <input id="appNameInput" class="form-input" type="text" maxlength="30" placeholder="例如：Tomica App">
+
+        <button type="submit" class="primary-btn">儲存名稱</button>
+      </form>
+    </div>
+  </div>
+
   <div class="modal hidden" id="themeModal">
     <div class="modal-backdrop" data-close="theme"></div>
     <div class="modal-panel">
       <div class="modal-header">
-        <h3>主題顏色</h3>
+        <h3>主題樣式</h3>
         <button class="close-button" data-close="theme" type="button">✕</button>
       </div>
 
-      <div class="form-grid">
-        <label class="form-label" for="themeBgInput">頁面底色</label>
-        <input id="themeBgInput" class="form-input color-input compact-color" type="color">
+      <div class="theme-grid">
+        <button class="theme-option theme-purple" data-theme="purple" type="button">
+          <div class="theme-preview">
+            <span class="theme-swatch" style="background:#0b1020;"></span>
+            <span class="theme-swatch" style="background:#121a2b;"></span>
+            <span class="theme-swatch" style="background:#8b5cf6;"></span>
+          </div>
+          <div class="theme-texts">
+            <div class="theme-name">Dark Purple</div>
+            <div class="theme-desc">科技感紫黑</div>
+          </div>
+          <span class="theme-selected-badge"></span>
+        </button>
 
-        <label class="form-label" for="themePanelInput">卡片底色</label>
-        <input id="themePanelInput" class="form-input color-input compact-color" type="color">
+        <button class="theme-option theme-blue" data-theme="blue" type="button">
+          <div class="theme-preview">
+            <span class="theme-swatch" style="background:#0a0f1c;"></span>
+            <span class="theme-swatch" style="background:#111827;"></span>
+            <span class="theme-swatch" style="background:#3b82f6;"></span>
+          </div>
+          <div class="theme-texts">
+            <div class="theme-name">Midnight Blue</div>
+            <div class="theme-desc">深藍高級感</div>
+          </div>
+          <span class="theme-selected-badge"></span>
+        </button>
 
-        <label class="form-label" for="themePanel2Input">次要區塊色</label>
-        <input id="themePanel2Input" class="form-input color-input compact-color" type="color">
+        <button class="theme-option theme-green" data-theme="green" type="button">
+          <div class="theme-preview">
+            <span class="theme-swatch" style="background:#07130f;"></span>
+            <span class="theme-swatch" style="background:#0f1f19;"></span>
+            <span class="theme-swatch" style="background:#10b981;"></span>
+          </div>
+          <div class="theme-texts">
+            <div class="theme-name">Emerald</div>
+            <div class="theme-desc">清爽墨綠</div>
+          </div>
+          <span class="theme-selected-badge"></span>
+        </button>
 
-        <label class="form-label" for="themeTextInput">主要文字色</label>
-        <input id="themeTextInput" class="form-input color-input compact-color" type="color">
+        <button class="theme-option theme-orange" data-theme="orange" type="button">
+          <div class="theme-preview">
+            <span class="theme-swatch" style="background:#140d07;"></span>
+            <span class="theme-swatch" style="background:#1f140c;"></span>
+            <span class="theme-swatch" style="background:#f97316;"></span>
+          </div>
+          <div class="theme-texts">
+            <div class="theme-name">Sunset</div>
+            <div class="theme-desc">暖色夕陽橘</div>
+          </div>
+          <span class="theme-selected-badge"></span>
+        </button>
 
-        <label class="form-label" for="themeMutedInput">次要文字色</label>
-        <input id="themeMutedInput" class="form-input color-input compact-color" type="color">
-
-        <label class="form-label" for="themeAccentInput">主色</label>
-        <input id="themeAccentInput" class="form-input color-input compact-color" type="color">
-
-        <label class="form-label" for="themeAccentTextInput">主色文字</label>
-        <input id="themeAccentTextInput" class="form-input color-input compact-color" type="color">
-
-        <label class="form-label" for="themeDangerInput">危險按鈕色</label>
-        <input id="themeDangerInput" class="form-input color-input compact-color" type="color">
+        <button class="theme-option theme-black" data-theme="black" type="button">
+          <div class="theme-preview">
+            <span class="theme-swatch" style="background:#000000;"></span>
+            <span class="theme-swatch" style="background:#111111;"></span>
+            <span class="theme-swatch" style="background:#ffffff;"></span>
+          </div>
+          <div class="theme-texts">
+            <div class="theme-name">Mono Black</div>
+            <div class="theme-desc">極簡黑白</div>
+          </div>
+          <span class="theme-selected-badge"></span>
+        </button>
       </div>
     </div>
   </div>
