@@ -83,12 +83,21 @@
     }
   };
 
+  function $(id) {
+    return document.getElementById(id);
+  }
+
+  function on(id, eventName, handler) {
+    const el = $(id);
+    if (el) el.addEventListener(eventName, handler);
+  }
+
   function generateId() {
     return crypto.randomUUID();
   }
 
   function getModalPanel(id) {
-    const modal = document.getElementById(id);
+    const modal = $(id);
     if (!modal) return null;
     return modal.querySelector(".modal-panel");
   }
@@ -109,33 +118,37 @@
   }
 
   function showAuthMessage(message, isError = false) {
-    const el = document.getElementById("authMessage");
+    const el = $("authMessage");
     if (!el) return;
     el.textContent = message || "";
     el.style.color = isError ? "#fecaca" : "var(--muted)";
   }
 
   function showLoginPage() {
-    document.getElementById("loginPage").classList.remove("hidden");
-    document.getElementById("appRoot").classList.add("hidden");
+    const loginPage = $("loginPage");
+    const appRoot = $("appRoot");
+    if (loginPage) loginPage.classList.remove("hidden");
+    if (appRoot) appRoot.classList.add("hidden");
   }
 
   function showAppPage() {
-    document.getElementById("loginPage").classList.add("hidden");
-    document.getElementById("appRoot").classList.remove("hidden");
+    const loginPage = $("loginPage");
+    const appRoot = $("appRoot");
+    if (loginPage) loginPage.classList.add("hidden");
+    if (appRoot) appRoot.classList.remove("hidden");
   }
 
   function showLoginView() {
-    const loginView = document.getElementById("loginView");
-    const signupView = document.getElementById("signupView");
+    const loginView = $("loginView");
+    const signupView = $("signupView");
     if (loginView) loginView.classList.remove("hidden");
     if (signupView) signupView.classList.add("hidden");
     showAuthMessage("");
   }
 
   function showSignupView() {
-    const loginView = document.getElementById("loginView");
-    const signupView = document.getElementById("signupView");
+    const loginView = $("loginView");
+    const signupView = $("signupView");
     if (loginView) loginView.classList.add("hidden");
     if (signupView) signupView.classList.remove("hidden");
     showAuthMessage("");
@@ -152,7 +165,7 @@
       "themeModal",
       "appNameModal"
     ].some(id => {
-      const modal = document.getElementById(id);
+      const modal = $(id);
       return modal && !modal.classList.contains("hidden");
     });
   }
@@ -162,16 +175,15 @@
     state.tempImage = "";
     state.tempFile = null;
     state.isSubmitting = false;
-    UI.setEditorMode(false);
-    UI.resetForm();
+    if (window.UI?.setEditorMode) UI.setEditorMode(false);
+    if (window.UI?.resetForm) UI.resetForm();
     setSubmitButtonLoading(false);
     scrollModalToTop("editorModal");
   }
 
   function openModal(id) {
-    const modal = document.getElementById(id);
+    const modal = $(id);
     if (!modal) return;
-
     modal.classList.remove("hidden");
     document.body.style.overflow = "hidden";
 
@@ -181,7 +193,7 @@
   }
 
   function closeModal(id) {
-    const modal = document.getElementById(id);
+    const modal = $(id);
     if (!modal) return;
 
     modal.classList.add("hidden");
@@ -198,7 +210,7 @@
   }
 
   function closeModalSilently(id) {
-    const modal = document.getElementById(id);
+    const modal = $(id);
     if (!modal) return;
     modal.classList.add("hidden");
   }
@@ -229,15 +241,19 @@
   }
 
   function refreshList() {
-    UI.renderSummary(state.items);
-    UI.renderItemList(
-      state.items,
-      state.searchKeyword,
-      state.statusFilter,
-      state.isEditMode
-    );
+    if (window.UI?.renderSummary) {
+      UI.renderSummary(state.items);
+    }
+    if (window.UI?.renderItemList) {
+      UI.renderItemList(
+        state.items,
+        state.searchKeyword,
+        state.statusFilter,
+        state.isEditMode
+      );
+    }
 
-    const toggleBtn = document.getElementById("toggleEditBtn");
+    const toggleBtn = $("toggleEditBtn");
     if (toggleBtn) {
       toggleBtn.textContent = state.isEditMode ? "完成" : "編輯";
     }
@@ -249,10 +265,17 @@
   }
 
   function refreshTopbar() {
-    UI.renderTopbar({
-      userName: getDisplayName(),
-      appName: StorageManager.getAppName()
-    });
+    if (window.UI?.renderTopbar) {
+      UI.renderTopbar({
+        userName: getDisplayName(),
+        appName: window.StorageManager?.getAppName ? StorageManager.getAppName() : "Car Wallet"
+      });
+    } else {
+      const subtitleEl = $("topbarSubtitle");
+      const titleEl = $("topbarTitle");
+      if (subtitleEl) subtitleEl.textContent = `${getDisplayName()}的模型帳本`;
+      if (titleEl) titleEl.textContent = window.StorageManager?.getAppName ? StorageManager.getAppName() : "Car Wallet";
+    }
   }
 
   function findItem(id) {
@@ -260,6 +283,7 @@
   }
 
   async function reloadItems() {
+    if (!window.StorageManager?.getItems) return;
     state.items = await StorageManager.getItems();
     refreshList();
   }
@@ -277,8 +301,8 @@
     state.tempImage = item.image || "";
     state.tempFile = null;
     state.isSubmitting = false;
-    UI.setEditorMode(true);
-    UI.fillForm(item);
+    if (window.UI?.setEditorMode) UI.setEditorMode(true);
+    if (window.UI?.fillForm) UI.fillForm(item);
     setSubmitButtonLoading(false);
     openModal("editorModal");
   }
@@ -287,7 +311,7 @@
     const item = findItem(id);
     if (!item) return;
 
-    UI.renderDetail(item);
+    if (window.UI?.renderDetail) UI.renderDetail(item);
     openModal("detailModal");
   }
 
@@ -309,7 +333,7 @@
 
     if (state.isSubmitting) return;
 
-    const name = document.getElementById("nameInput").value.trim();
+    const name = $("nameInput")?.value.trim();
     if (!name) {
       alert("模型名稱不能空白");
       return;
@@ -329,13 +353,13 @@
       const payload = {
         id: state.editingId || generateId(),
         name,
-        brand: document.getElementById("brandInput").value.trim(),
-        series: document.getElementById("seriesInput").value.trim(),
-        price: Number(document.getElementById("priceInput").value || 0),
-        purchaseDate: document.getElementById("dateInput").value,
-        purchasePlace: document.getElementById("placeInput").value.trim(),
-        status: document.getElementById("statusInput").value,
-        notes: document.getElementById("notesInput").value.trim(),
+        brand: $("brandInput")?.value.trim() || "",
+        series: $("seriesInput")?.value.trim() || "",
+        price: Number($("priceInput")?.value || 0),
+        purchaseDate: $("dateInput")?.value || "",
+        purchasePlace: $("placeInput")?.value.trim() || "",
+        status: $("statusInput")?.value || "",
+        notes: $("notesInput")?.value.trim() || "",
         image: imageUrl,
         createdAt: state.editingId ? (existing?.createdAt || Date.now()) : Date.now()
       };
@@ -353,11 +377,11 @@
   }
 
   function handleImageChange(event) {
-    const file = event.target.files[0];
+    const file = event.target.files?.[0];
     if (!file) {
       state.tempFile = null;
       state.tempImage = "";
-      UI.renderImagePreview("");
+      if (window.UI?.renderImagePreview) UI.renderImagePreview("");
       return;
     }
 
@@ -378,43 +402,14 @@
     const reader = new FileReader();
     reader.onload = e => {
       state.tempImage = e.target.result;
-      UI.renderImagePreview(state.tempImage);
+      if (window.UI?.renderImagePreview) UI.renderImagePreview(state.tempImage);
     };
     reader.readAsDataURL(file);
   }
 
-  function resetStatsSectionsIfNeeded() {
-    const modalBody = document.getElementById("statsModalPanel");
-
-    if (!document.getElementById("brandChart")) {
-      modalBody.innerHTML = `
-        <div class="modal-header">
-          <h3>統計分析</h3>
-          <button class="close-button" data-close="stats" type="button">✕</button>
-        </div>
-
-        <div class="stats-section">
-          <h4 class="stats-title">各品牌佔比</h4>
-          <canvas id="brandChart"></canvas>
-        </div>
-
-        <div class="stats-section">
-          <h4 class="stats-title">每月花費</h4>
-          <canvas id="monthChart"></canvas>
-        </div>
-
-        <div class="stats-section">
-          <h4 class="stats-title">各品牌花費</h4>
-          <div id="brandSpendList" class="stats-list"></div>
-        </div>
-      `;
-    }
-  }
-
   function openStats() {
-    resetStatsSectionsIfNeeded();
     openModal("statsModal");
-    Stats.render(state.items);
+    if (window.Stats?.render) Stats.render(state.items);
   }
 
   async function fillProfileForm() {
@@ -424,18 +419,20 @@
     state.currentUser = user;
 
     const meta = user.user_metadata || {};
-    document.getElementById("profileName").value = meta.display_name || "";
-    document.getElementById("profileGender").value = meta.gender || "";
-    document.getElementById("profileEmail").value = user.email || "";
+    if ($("profileName")) $("profileName").value = meta.display_name || "";
+    if ($("profileGender")) $("profileGender").value = meta.gender || "";
+    if ($("profileEmail")) $("profileEmail").value = user.email || "";
   }
 
   function fillAppNameForm() {
-    document.getElementById("appNameInput").value = StorageManager.getAppName();
+    if ($("appNameInput")) {
+      $("appNameInput").value = window.StorageManager?.getAppName ? StorageManager.getAppName() : "Car Wallet";
+    }
   }
 
   function resetPasswordForm() {
-    document.getElementById("profilePassword").value = "";
-    document.getElementById("profilePassword2").value = "";
+    if ($("profilePassword")) $("profilePassword").value = "";
+    if ($("profilePassword2")) $("profilePassword2").value = "";
   }
 
   async function saveProfile(event) {
@@ -443,9 +440,9 @@
     if (state.isProfileSubmitting) return;
 
     const submitBtn = document.querySelector("#profileForm button[type='submit']");
-    const name = document.getElementById("profileName").value.trim();
-    const gender = document.getElementById("profileGender").value;
-    const email = document.getElementById("profileEmail").value.trim();
+    const name = $("profileName")?.value.trim();
+    const gender = $("profileGender")?.value;
+    const email = $("profileEmail")?.value.trim();
 
     if (!name || !gender || !email) {
       alert("姓名、性別、Email 不能空白");
@@ -482,8 +479,8 @@
     if (state.isPasswordSubmitting) return;
 
     const submitBtn = document.querySelector("#passwordForm button[type='submit']");
-    const password = document.getElementById("profilePassword").value;
-    const password2 = document.getElementById("profilePassword2").value;
+    const password = $("profilePassword")?.value;
+    const password2 = $("profilePassword2")?.value;
 
     if (!password || !password2) {
       alert("請輸入新密碼並再次確認");
@@ -528,7 +525,7 @@
     if (state.isAppNameSubmitting) return;
 
     const submitBtn = document.querySelector("#appNameForm button[type='submit']");
-    const appName = document.getElementById("appNameInput").value.trim();
+    const appName = $("appNameInput")?.value.trim();
 
     if (!appName) {
       alert("名稱不能空白");
@@ -547,7 +544,9 @@
     }
 
     try {
-      StorageManager.saveAppName(appName);
+      if (window.StorageManager?.saveAppName) {
+        StorageManager.saveAppName(appName);
+      }
       refreshTopbar();
       alert("名稱已更新");
       returnToSettings("appNameModal");
@@ -564,8 +563,8 @@
   }
 
   async function login() {
-    const email = document.getElementById("loginEmail").value.trim();
-    const password = document.getElementById("loginPassword").value;
+    const email = $("loginEmail")?.value.trim();
+    const password = $("loginPassword")?.value;
 
     if (!email || !password) {
       showAuthMessage("請輸入 Email 與密碼", true);
@@ -587,11 +586,11 @@
   }
 
   async function signup() {
-    const name = document.getElementById("signupName").value.trim();
-    const gender = document.getElementById("signupGender").value;
-    const email = document.getElementById("signupEmail").value.trim();
-    const password = document.getElementById("signupPassword").value;
-    const password2 = document.getElementById("signupPassword2").value;
+    const name = $("signupName")?.value.trim();
+    const gender = $("signupGender")?.value;
+    const email = $("signupEmail")?.value.trim();
+    const password = $("signupPassword")?.value;
+    const password2 = $("signupPassword2")?.value;
 
     if (!name || !gender || !email || !password || !password2) {
       showAuthMessage("請填完整資料", true);
@@ -627,15 +626,15 @@
     showAuthMessage("註冊成功，請登入", false);
     showLoginView();
 
-    document.getElementById("signupName").value = "";
-    document.getElementById("signupGender").value = "";
-    document.getElementById("signupEmail").value = "";
-    document.getElementById("signupPassword").value = "";
-    document.getElementById("signupPassword2").value = "";
+    if ($("signupName")) $("signupName").value = "";
+    if ($("signupGender")) $("signupGender").value = "";
+    if ($("signupEmail")) $("signupEmail").value = "";
+    if ($("signupPassword")) $("signupPassword").value = "";
+    if ($("signupPassword2")) $("signupPassword2").value = "";
   }
 
   async function logout() {
-    const logoutBtn = document.getElementById("logoutBtn");
+    const logoutBtn = $("logoutBtn");
     if (logoutBtn) {
       logoutBtn.disabled = true;
       logoutBtn.textContent = "登出中...";
@@ -674,8 +673,8 @@
       refreshList();
       closeAllModals();
 
-      document.getElementById("loginEmail").value = "";
-      document.getElementById("loginPassword").value = "";
+      if ($("loginEmail")) $("loginEmail").value = "";
+      if ($("loginPassword")) $("loginPassword").value = "";
       showLoginPage();
       showLoginView();
 
@@ -690,8 +689,8 @@
     const theme = THEMES[themeKey];
     if (!theme) return;
 
-    UI.applyTheme(theme);
-    StorageManager.saveTheme(theme);
+    if (window.UI?.applyTheme) UI.applyTheme(theme);
+    if (window.StorageManager?.saveTheme) StorageManager.saveTheme(theme);
     updateThemeSelection(themeKey);
   }
 
@@ -711,7 +710,7 @@
   }
 
   function getCurrentThemeKey() {
-    const savedTheme = StorageManager.getTheme();
+    const savedTheme = window.StorageManager?.getTheme ? StorageManager.getTheme() : null;
 
     for (const [key, theme] of Object.entries(THEMES)) {
       if (isSameTheme(savedTheme, theme)) {
@@ -771,41 +770,44 @@
   }
 
   function bindAppEvents() {
-    document.getElementById("addBtn").addEventListener("click", startCreate);
-    document.getElementById("itemForm").addEventListener("submit", submitForm);
-    document.getElementById("imageInput").addEventListener("change", handleImageChange);
+    on("addBtn", "click", startCreate);
+    on("itemForm", "submit", submitForm);
+    on("imageInput", "change", handleImageChange);
 
-    document.getElementById("searchInput").addEventListener("input", e => {
+    on("searchInput", "input", e => {
       state.searchKeyword = e.target.value.trim();
       refreshList();
     });
 
-    document.getElementById("statusFilter").addEventListener("change", e => {
+    on("statusFilter", "change", e => {
       state.statusFilter = e.target.value;
       refreshList();
     });
 
-    document.getElementById("toggleEditBtn").addEventListener("click", toggleEditMode);
+    on("toggleEditBtn", "click", toggleEditMode);
 
-    document.getElementById("itemList").addEventListener("click", event => {
-      const target = event.target.closest("[data-action]");
-      if (!target) return;
+    const itemList = $("itemList");
+    if (itemList) {
+      itemList.addEventListener("click", event => {
+        const target = event.target.closest("[data-action]");
+        if (!target) return;
 
-      const action = target.dataset.action;
-      const id = target.dataset.id;
+        const action = target.dataset.action;
+        const id = target.dataset.id;
 
-      if (action === "detail") showDetail(id);
-      if (action === "edit") startEdit(id);
-      if (action === "delete") removeItem(id);
-    });
+        if (action === "detail") showDetail(id);
+        if (action === "edit") startEdit(id);
+        if (action === "delete") removeItem(id);
+      });
+    }
 
-    document.getElementById("summaryCard").addEventListener("click", openStats);
+    on("summaryCard", "click", openStats);
 
-    document.getElementById("settingsBtn").addEventListener("click", () => {
+    on("settingsBtn", "click", () => {
       openModal("settingsModal");
     });
 
-    document.getElementById("openProfileBtn").addEventListener("click", async () => {
+    on("openProfileBtn", "click", async () => {
       try {
         await fillProfileForm();
         switchToChildModal("profileModal");
@@ -815,47 +817,51 @@
       }
     });
 
-    document.getElementById("openPasswordBtn").addEventListener("click", () => {
+    on("openPasswordBtn", "click", () => {
       resetPasswordForm();
       switchToChildModal("passwordModal");
     });
 
-    document.getElementById("openThemeBtn").addEventListener("click", () => {
+    on("openThemeBtn", "click", () => {
       updateThemeSelection(getCurrentThemeKey());
       switchToChildModal("themeModal");
     });
 
-    document.getElementById("openAppNameBtn").addEventListener("click", () => {
+    on("openAppNameBtn", "click", () => {
       fillAppNameForm();
       switchToChildModal("appNameModal");
     });
 
-    document.getElementById("profileForm").addEventListener("submit", saveProfile);
-    document.getElementById("passwordForm").addEventListener("submit", savePassword);
-    document.getElementById("appNameForm").addEventListener("submit", saveAppName);
+    on("profileForm", "submit", saveProfile);
+    on("passwordForm", "submit", savePassword);
+    on("appNameForm", "submit", saveAppName);
 
-    document.getElementById("settingsExportBtn").addEventListener("click", () => {
-      StorageManager.exportItems(state.items);
+    on("settingsExportBtn", "click", () => {
+      if (window.StorageManager?.exportItems) {
+        StorageManager.exportItems(state.items);
+      }
     });
 
-    document.getElementById("logoutBtn").addEventListener("click", logout);
+    on("logoutBtn", "click", logout);
 
     bindThemePresetEvents();
     bindCloseButtons();
   }
 
   function bindAuthEvents() {
-    document.getElementById("loginBtn").addEventListener("click", login);
-    document.getElementById("signupBtn").addEventListener("click", signup);
-    document.getElementById("goSignup").addEventListener("click", showSignupView);
-    document.getElementById("goLogin").addEventListener("click", showLoginView);
+    on("loginBtn", "click", login);
+    on("signupBtn", "click", signup);
+    on("goSignup", "click", showSignupView);
+    on("goLogin", "click", showLoginView);
   }
 
   function applySavedTheme() {
-    const savedTheme = StorageManager.getTheme();
+    const savedTheme = window.StorageManager?.getTheme ? StorageManager.getTheme() : null;
     const fallbackTheme = THEMES.sage;
 
-    UI.applyTheme(savedTheme || fallbackTheme);
+    if (window.UI?.applyTheme) {
+      UI.applyTheme(savedTheme || fallbackTheme);
+    }
     updateThemeSelection(getCurrentThemeKey());
   }
 
@@ -872,6 +878,12 @@
   }
 
   async function bootstrapAuthedApp() {
+    if (!window.StorageManager?.getCurrentUser) {
+      showLoginPage();
+      showLoginView();
+      return;
+    }
+
     state.currentUser = await StorageManager.getCurrentUser();
 
     if (!state.currentUser) {
@@ -887,26 +899,31 @@
   }
 
   async function init() {
+    // 先強制顯示登入頁，避免 JS 中途出錯整頁空白
+    showLoginPage();
+    showLoginView();
+
     bindAuthEvents();
     bindAppEvents();
     applySavedTheme();
 
+    if (!window.StorageManager?.getSessionUser) return;
+
     const sessionUser = await StorageManager.getSessionUser();
     if (sessionUser) {
       await bootstrapAuthedApp();
-    } else {
-      showLoginPage();
-      showLoginView();
     }
 
-    window.supabaseClient.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        state.currentUser = session.user;
-        refreshTopbar();
-      } else {
-        state.currentUser = null;
-      }
-    });
+    if (window.supabaseClient?.auth?.onAuthStateChange) {
+      window.supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+        if (session?.user) {
+          state.currentUser = session.user;
+          refreshTopbar();
+        } else {
+          state.currentUser = null;
+        }
+      });
+    }
 
     registerServiceWorker();
   }
