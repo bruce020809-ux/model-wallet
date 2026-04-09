@@ -20,9 +20,10 @@ window.UI = (() => {
     return `${y}-${m}`;
   }
 
-  function renderTopbar({ userName, appName }) {
+  function renderTopbar({ userName, appName, isPro }) {
     const subtitleEl = document.getElementById("topbarSubtitle");
     const titleEl = document.getElementById("topbarTitle");
+    const proBadge = document.getElementById("proBadge");
 
     if (subtitleEl) {
       subtitleEl.textContent = `${userName || "使用者"}的模型帳本`;
@@ -30,6 +31,10 @@ window.UI = (() => {
 
     if (titleEl) {
       titleEl.textContent = appName || "Car Wallet";
+    }
+
+    if (proBadge) {
+      proBadge.classList.toggle("hidden", !isPro);
     }
 
     document.title = appName || "Car Wallet";
@@ -41,13 +46,18 @@ window.UI = (() => {
     const currentMonth = getCurrentMonthText();
     const monthCount = items.filter(item => (item.purchaseDate || "").startsWith(currentMonth)).length;
 
-    document.getElementById("totalCount").textContent = totalCount;
-    document.getElementById("totalSpent").textContent = formatCurrency(totalSpent);
-    document.getElementById("monthCount").textContent = monthCount;
+    const totalCountEl = document.getElementById("totalCount");
+    const totalSpentEl = document.getElementById("totalSpent");
+    const monthCountEl = document.getElementById("monthCount");
+
+    if (totalCountEl) totalCountEl.textContent = totalCount;
+    if (totalSpentEl) totalSpentEl.textContent = formatCurrency(totalSpent);
+    if (monthCountEl) monthCountEl.textContent = monthCount;
   }
 
   function renderItemList(items, keyword = "", status = "", isEditMode = false) {
     const itemList = document.getElementById("itemList");
+    if (!itemList) return;
 
     const filtered = items.filter(item => {
       const haystack = [
@@ -127,6 +137,7 @@ window.UI = (() => {
 
   function renderImagePreview(imageDataUrl) {
     const imagePreview = document.getElementById("imagePreview");
+    if (!imagePreview) return;
 
     if (!imageDataUrl) {
       imagePreview.innerHTML = "";
@@ -142,6 +153,8 @@ window.UI = (() => {
 
   function renderDetail(item) {
     const detailContent = document.getElementById("detailContent");
+    if (!detailContent) return;
+
     detailContent.innerHTML = `
       <h2 class="detail-title">${escapeHtml(item.name)}</h2>
       <p class="detail-price">${formatCurrency(item.price)}</p>
@@ -172,21 +185,38 @@ window.UI = (() => {
   }
 
   function setEditorMode(isEdit) {
-    document.getElementById("editorTitle").textContent = isEdit ? "編輯模型" : "新增模型";
+    const editorTitle = document.getElementById("editorTitle");
+    if (editorTitle) {
+      editorTitle.textContent = isEdit ? "編輯模型" : "新增模型";
+    }
   }
 
   function fillForm(item) {
-    document.getElementById("itemId").value = item?.id || "";
-    document.getElementById("nameInput").value = item?.name || "";
-    document.getElementById("brandInput").value = item?.brand || "";
-    document.getElementById("seriesInput").value = item?.series || "";
-    document.getElementById("priceInput").value = item?.price || 0;
-    document.getElementById("dateInput").value = item?.purchaseDate || "";
-    document.getElementById("placeInput").value = item?.purchasePlace || "";
-    document.getElementById("statusInput").value = item?.status || "";
-    document.getElementById("notesInput").value = item?.notes || "";
-    document.getElementById("imageInput").value = "";
-    renderImagePreview(item?.image || "");
+    const safeItem = item || {};
+
+    const itemId = document.getElementById("itemId");
+    const nameInput = document.getElementById("nameInput");
+    const brandInput = document.getElementById("brandInput");
+    const seriesInput = document.getElementById("seriesInput");
+    const priceInput = document.getElementById("priceInput");
+    const dateInput = document.getElementById("dateInput");
+    const placeInput = document.getElementById("placeInput");
+    const statusInput = document.getElementById("statusInput");
+    const notesInput = document.getElementById("notesInput");
+    const imageInput = document.getElementById("imageInput");
+
+    if (itemId) itemId.value = safeItem.id || "";
+    if (nameInput) nameInput.value = safeItem.name || "";
+    if (brandInput) brandInput.value = safeItem.brand || "";
+    if (seriesInput) seriesInput.value = safeItem.series || "";
+    if (priceInput) priceInput.value = safeItem.price || 0;
+    if (dateInput) dateInput.value = safeItem.purchaseDate || "";
+    if (placeInput) placeInput.value = safeItem.purchasePlace || "";
+    if (statusInput) statusInput.value = safeItem.status || "";
+    if (notesInput) notesInput.value = safeItem.notes || "";
+    if (imageInput) imageInput.value = "";
+
+    renderImagePreview(safeItem.image || "");
   }
 
   function resetForm() {
@@ -197,12 +227,12 @@ window.UI = (() => {
     const root = document.documentElement;
 
     const finalTheme = {
-      bg: theme?.bg || "#D0E7D2",
-      panel: theme?.panel || "#B0D9B1",
-      panel2: theme?.panel2 || "#79AC78",
-      text: theme?.text || "#1F2A1F",
-      muted: theme?.muted || "#5A6F5A",
-      accent: theme?.accent || "#618263",
+      bg: theme?.bg || "#F1EFEF",
+      panel: theme?.panel || "#CCC8AA",
+      panel2: theme?.panel2 || "#7D7C7C",
+      text: theme?.text || "#111111",
+      muted: theme?.muted || "#666666",
+      accent: theme?.accent || "#191717",
       accentText: theme?.accentText || "#FFFFFF",
       danger: theme?.danger || "#C84B4B"
     };

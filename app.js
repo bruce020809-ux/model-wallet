@@ -43,7 +43,7 @@
       panel: "#9D76C1",
       panel2: "#713ABE",
       text: "#240A34",
-      muted: "#6E4D8E",
+      muted: "#E5E7EB",
       accent: "#5B0788",
       accentText: "#FFFFFF",
       danger: "#C84B4B"
@@ -221,7 +221,8 @@
       "profileModal",
       "passwordModal",
       "themeModal",
-      "appNameModal"
+      "appNameModal",
+      "proKeyModal"
     ].some(id => {
       const modal = $(id);
       return modal && !modal.classList.contains("hidden");
@@ -267,7 +268,8 @@
       "profileModal",
       "passwordModal",
       "themeModal",
-      "appNameModal"
+      "appNameModal",
+      "proKeyModal"
     ].forEach(closeModalSilently);
 
     document.body.style.overflow = "";
@@ -323,18 +325,27 @@
       ? StorageManager.getAppName()
       : "Car Wallet";
 
+    const isPro = window.StorageManager?.getProStatus
+      ? StorageManager.getProStatus()
+      : false;
+
     if (window.UI?.renderTopbar) {
       UI.renderTopbar({
         userName: getDisplayName(),
-        appName
+        appName,
+        isPro
       });
       return;
     }
 
     const subtitleEl = $("topbarSubtitle");
     const titleEl = $("topbarTitle");
+    const proBadge = $("proBadge");
+
     if (subtitleEl) subtitleEl.textContent = `${getDisplayName()}的模型帳本`;
     if (titleEl) titleEl.textContent = appName;
+    if (proBadge) proBadge.classList.toggle("hidden", !isPro);
+
     document.title = appName;
   }
 
@@ -387,6 +398,10 @@
     if ($("appNameInput") && window.StorageManager?.getAppName) {
       $("appNameInput").value = StorageManager.getAppName();
     }
+  }
+
+  function resetProKeyForm() {
+    if ($("proKeyInput")) $("proKeyInput").value = "";
   }
 
   function startCreate() {
@@ -661,6 +676,34 @@
     }
   }
 
+  function saveProKey(event) {
+    event.preventDefault();
+
+    const key = $("proKeyInput")?.value.trim();
+    if (!key) {
+      alert("請輸入金鑰");
+      return;
+    }
+
+    if (!window.StorageManager?.verifyProKey) {
+      alert("金鑰系統未載入");
+      return;
+    }
+
+    const ok = StorageManager.verifyProKey(key);
+
+    if (!ok) {
+      alert("金鑰錯誤");
+      return;
+    }
+
+    StorageManager.saveProStatus(true);
+    refreshTopbar();
+    alert("Pro 已啟用");
+    resetProKeyForm();
+    returnToSettings("proKeyModal");
+  }
+
   async function login() {
     try {
       const email = $("loginEmail")?.value.trim();
@@ -836,7 +879,7 @@
       }
     }
 
-    return "sage";
+    return "stone";
   }
 
   function updateThemeSelection(selectedKey) {
@@ -879,6 +922,7 @@
       if (closeType === "password") returnToSettings("passwordModal");
       if (closeType === "theme") returnToSettings("themeModal");
       if (closeType === "appname") returnToSettings("appNameModal");
+      if (closeType === "prokey") returnToSettings("proKeyModal");
     });
   }
 
@@ -940,19 +984,25 @@
       switchToChildModal("passwordModal");
     });
 
-    on("openThemeBtn", "click", () => {
-      updateThemeSelection(getCurrentThemeKey());
-      switchToChildModal("themeModal");
-    });
-
     on("openAppNameBtn", "click", () => {
       fillAppNameForm();
       switchToChildModal("appNameModal");
     });
 
+    on("openProKeyBtn", "click", () => {
+      resetProKeyForm();
+      switchToChildModal("proKeyModal");
+    });
+
+    on("openThemeBtn", "click", () => {
+      updateThemeSelection(getCurrentThemeKey());
+      switchToChildModal("themeModal");
+    });
+
     on("profileForm", "submit", saveProfile);
     on("passwordForm", "submit", savePassword);
     on("appNameForm", "submit", saveAppName);
+    on("proKeyForm", "submit", saveProKey);
 
     on("settingsExportBtn", "click", () => {
       if (window.StorageManager?.exportItems) {
@@ -975,7 +1025,7 @@
 
   function applySavedTheme() {
     const savedTheme = window.StorageManager?.getTheme ? StorageManager.getTheme() : null;
-    const fallbackTheme = THEMES.sage;
+    const fallbackTheme = THEMES.stone;
 
     if (window.UI?.applyTheme) {
       UI.applyTheme(savedTheme || fallbackTheme);

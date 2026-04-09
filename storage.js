@@ -230,6 +230,23 @@ window.StorageManager = (() => {
     return localStorage.getItem("car-wallet-app-name") || "Car Wallet";
   }
 
+  function verifyProKey(key) {
+    const validKey = "TOMICA-PRO-2026";
+    return key === validKey;
+  }
+
+  function saveProStatus(isPro) {
+    localStorage.setItem("car-wallet-pro", isPro ? "true" : "false");
+  }
+
+  function getProStatus() {
+    return localStorage.getItem("car-wallet-pro") === "true";
+  }
+
+  function clearProStatus() {
+    localStorage.removeItem("car-wallet-pro");
+  }
+
   return {
     getCurrentUser,
     getSessionUser,
@@ -244,6 +261,10 @@ window.StorageManager = (() => {
     saveTheme,
     getTheme,
     saveAppName,
-    getAppName
+    getAppName,
+    verifyProKey,
+    saveProStatus,
+    getProStatus,
+    clearProStatus
   };
 })();

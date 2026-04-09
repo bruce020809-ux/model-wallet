@@ -1,11 +1,11 @@
 :root {
-  --bg: #D0E7D2;
-  --panel: #B0D9B1;
-  --panel-2: #79AC78;
+  --bg: #F1EFEF;
+  --panel: #CCC8AA;
+  --panel-2: #7D7C7C;
   --line: rgba(0, 0, 0, 0.08);
-  --text: #1F2A1F;
-  --muted: #5A6F5A;
-  --accent: #618263;
+  --text: #111111;
+  --muted: #666666;
+  --accent: #191717;
   --accent-text: #FFFFFF;
   --danger: #C84B4B;
   --radius-xl: 24px;
@@ -90,6 +90,12 @@ canvas {
   border-bottom: 1px solid var(--line);
 }
 
+.topbar-subtitle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .topbar-subtitle {
   margin: 0 0 4px;
   font-size: 12px;
@@ -100,6 +106,19 @@ canvas {
   margin: 0;
   font-size: 24px;
   font-weight: 800;
+}
+
+.pro-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #111827;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
 }
 
 .topbar-actions {

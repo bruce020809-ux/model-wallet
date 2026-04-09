@@ -81,7 +81,10 @@
   <div id="appRoot" class="app-shell hidden">
     <header class="topbar safe-top">
       <div>
-        <p class="topbar-subtitle" id="topbarSubtitle">我的模型帳本</p>
+        <div class="topbar-subtitle-row">
+          <p class="topbar-subtitle" id="topbarSubtitle">我的模型帳本</p>
+          <span id="proBadge" class="pro-badge hidden">Pro</span>
+        </div>
         <h1 class="topbar-title" id="topbarTitle">Car Wallet</h1>
       </div>
       <div class="topbar-actions">
@@ -248,6 +251,14 @@
           <span>›</span>
         </button>
 
+        <button id="openProKeyBtn" class="settings-menu-item" type="button">
+          <div>
+            <div class="settings-menu-title">輸入 Pro 金鑰</div>
+            <div class="settings-menu-subtitle">驗證成功後顯示 Pro 標記</div>
+          </div>
+          <span>›</span>
+        </button>
+
         <button id="openThemeBtn" class="settings-menu-item" type="button">
           <div>
             <div class="settings-menu-title">主題樣式</div>
@@ -336,6 +347,23 @@
         <input id="appNameInput" class="form-input" type="text" maxlength="30" placeholder="例如：Tomica App">
 
         <button type="submit" class="primary-btn">儲存名稱</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="proKeyModal">
+    <div class="modal-backdrop" data-close="prokey"></div>
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h3>輸入 Pro 金鑰</h3>
+        <button class="close-button" data-close="prokey" type="button">✕</button>
+      </div>
+
+      <form id="proKeyForm" class="form-grid">
+        <label class="form-label" for="proKeyInput">Pro 金鑰</label>
+        <input id="proKeyInput" class="form-input" type="text" placeholder="請輸入金鑰">
+
+        <button type="submit" class="primary-btn">驗證金鑰</button>
       </form>
     </div>
   </div>
