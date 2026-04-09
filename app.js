@@ -11,7 +11,11 @@
     currentUser: null,
     isProfileSubmitting: false,
     isPasswordSubmitting: false,
-    isAppNameSubmitting: false
+    isAppNameSubmitting: false,
+    scannerMode: "manual",
+    scannerStream: null,
+    scannerActive: false,
+    isScanning: false
   };
 
   const THEMES = {
@@ -81,7 +85,6 @@
       accentText: "#FFFFFF",
       danger: "#C62828"
     }
-    
   };
 
   let deferredInstallPrompt = null;
@@ -244,6 +247,7 @@
     modal.classList.add("hidden");
 
     if (id === "editorModal") {
+      stopCamera();
       resetEditorState();
     } else {
       scrollModalToTop(id);
@@ -261,6 +265,7 @@
   }
 
   function closeAllModals() {
+    stopCamera();
     [
       "editorModal",
       "detailModal",
@@ -379,14 +384,63 @@
     refreshList();
   }
 
+  function updateScannerEmptyHint() {
+    const hint = $("scannerEmptyHint");
+    const video = $("cameraPreview");
+    if (!hint || !video) return;
+
+    const hasStream = !!video.srcObject;
+    hint.classList.toggle("hidden", hasStream);
+  }
+
+  function setScanMode(mode) {
+    state.scannerMode = mode;
+
+    const manualBtn = $("manualModeBtn");
+    const scanBtn = $("scanModeBtn");
+    const scannerSection = $("scannerSection");
+
+    if (manualBtn) manualBtn.classList.toggle("active", mode === "manual");
+    if (scanBtn) scanBtn.classList.toggle("active", mode === "scan");
+    if (scannerSection) scannerSection.classList.toggle("hidden", mode !== "scan");
+  }
+
+  function setScanResultHTML(html) {
+    const resultBox = $("scanResult");
+    if (resultBox) resultBox.innerHTML = html;
+  }
+
+  function setScanResultText(text) {
+    const resultBox = $("scanResult");
+    if (!resultBox) return;
+    resultBox.innerHTML = `<p>${escapeHtml(text || "")}</p>`;
+  }
+
+  function escapeHtml(text) {
+    return String(text || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function resetScanUI() {
+    setScanMode("manual");
+    setScanResultHTML(`<p>掃描結果會顯示在這裡</p>`);
+    updateScannerEmptyHint();
+  }
+
   function resetEditorState() {
     state.editingId = null;
     state.tempImage = "";
     state.tempFile = null;
     state.isSubmitting = false;
+    state.isScanning = false;
     if (window.UI?.setEditorMode) UI.setEditorMode(false);
     if (window.UI?.resetForm) UI.resetForm();
     setItemSubmitButtonLoading(false);
+    resetScanUI();
     scrollModalToTop("editorModal");
   }
 
@@ -418,11 +472,13 @@
     state.tempImage = item.image || "";
     state.tempFile = null;
     state.isSubmitting = false;
+    state.isScanning = false;
 
     if (window.UI?.setEditorMode) UI.setEditorMode(true);
     if (window.UI?.fillForm) UI.fillForm(item);
 
     setItemSubmitButtonLoading(false);
+    resetScanUI();
     openModal("editorModal");
   }
 
@@ -819,6 +875,8 @@
     } catch (error) {
       console.error("logout error:", error);
     } finally {
+      stopCamera();
+
       state.currentUser = null;
       state.items = [];
       state.editingId = null;
@@ -831,6 +889,9 @@
       state.isProfileSubmitting = false;
       state.isPasswordSubmitting = false;
       state.isAppNameSubmitting = false;
+      state.scannerMode = "manual";
+      state.scannerActive = false;
+      state.isScanning = false;
 
       refreshList();
       closeAllModals();
@@ -932,6 +993,275 @@
     refreshList();
   }
 
+  async function startCamera() {
+    const video = $("cameraPreview");
+    if (!video) return;
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      alert("此裝置或瀏覽器不支援相機");
+      return;
+    }
+
+    try {
+      if (state.scannerStream) {
+        stopCamera();
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" }
+        },
+        audio: false
+      });
+
+      state.scannerStream = stream;
+      state.scannerActive = true;
+      video.srcObject = stream;
+
+      await video.play().catch(() => {});
+      updateScannerEmptyHint();
+      setScanResultHTML(`<p>鏡頭已開啟，請對準盒面或條碼後按「拍照辨識」</p>`);
+    } catch (error) {
+      console.error("startCamera error:", error);
+      alert("無法開啟鏡頭，請確認權限是否允許");
+    }
+  }
+
+  function stopCamera() {
+    const video = $("cameraPreview");
+
+    if (state.scannerStream) {
+      state.scannerStream.getTracks().forEach(track => track.stop());
+      state.scannerStream = null;
+    }
+
+    state.scannerActive = false;
+
+    if (video) {
+      video.pause?.();
+      video.srcObject = null;
+    }
+
+    updateScannerEmptyHint();
+  }
+
+  function captureCurrentFrame() {
+    const video = $("cameraPreview");
+    const canvas = $("captureCanvas");
+    if (!video || !canvas) return null;
+
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+
+    if (!width || !height) return null;
+
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    ctx.drawImage(video, 0, 0, width, height);
+
+    return { canvas, width, height };
+  }
+
+  async function detectBarcodeFromCanvas(canvas) {
+    if (!("BarcodeDetector" in window)) {
+      return null;
+    }
+
+    try {
+      const detector = new BarcodeDetector();
+      const barcodes = await detector.detect(canvas);
+      if (!barcodes?.length) return null;
+
+      const first = barcodes[0];
+      return {
+        rawValue: first.rawValue || "",
+        format: first.format || ""
+      };
+    } catch (error) {
+      console.warn("Barcode detect failed:", error);
+      return null;
+    }
+  }
+
+  async function recognizeTextFromCanvas(canvas) {
+    if (!window.Tesseract?.createWorker) {
+      throw new Error("Tesseract.js 未正確載入");
+    }
+
+    const worker = await Tesseract.createWorker("eng");
+
+    try {
+      const result = await worker.recognize(canvas);
+      return result?.data?.text || "";
+    } finally {
+      await worker.terminate();
+    }
+  }
+
+  function normalizeOCRText(text) {
+    return String(text || "")
+      .replace(/\r/g, "")
+      .replace(/[ \t]+\n/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+  }
+
+  function inferBrandFromText(text) {
+    const t = text.toLowerCase();
+
+    if (/tomica limited vintage neo|limited vintage neo|lv-n/i.test(text)) return "TLV";
+    if (/limited vintage/i.test(text)) return "TLV";
+    if (/tomica premium/i.test(text)) return "Tomica";
+    if (/tomica/i.test(text)) return "Tomica";
+    if (/mini\s*gt/i.test(text)) return "Mini GT";
+    if (/hot\s*wheels/i.test(text)) return "Hot Wheels";
+    if (/matchbox/i.test(text)) return "Matchbox";
+
+    return "";
+  }
+
+  function inferSeriesFromText(text) {
+    if (/tomica premium/i.test(text)) return "Premium";
+    if (/limited vintage neo|lv-n/i.test(text)) return "Limited Vintage Neo";
+    if (/limited vintage/i.test(text)) return "Limited Vintage";
+    if (/premium unlimited/i.test(text)) return "Premium Unlimited";
+    return "";
+  }
+
+  function inferNameFromText(text) {
+    const lines = String(text || "")
+      .split("\n")
+      .map(line => line.trim())
+      .filter(Boolean);
+
+    const blacklist = [
+      /^tomica$/i,
+      /^tomica premium$/i,
+      /^takara tomy$/i,
+      /^limited vintage$/i,
+      /^limited vintage neo$/i,
+      /^made in/i,
+      /^scale/i,
+      /^no\.\s*\d+/i,
+      /^\d{8,14}$/ // 條碼數字
+    ];
+
+    const goodLine = lines.find(line => {
+      if (line.length < 3) return false;
+      return !blacklist.some(rule => rule.test(line));
+    });
+
+    return goodLine || lines[0] || "";
+  }
+
+  function mergeNotesWithScan(notes, barcode, ocrText) {
+    const parts = [];
+
+    if (notes?.trim()) parts.push(notes.trim());
+    if (barcode?.rawValue) {
+      parts.push(`[掃描條碼] ${barcode.rawValue}${barcode.format ? ` (${barcode.format})` : ""}`);
+    }
+    if (ocrText?.trim()) {
+      parts.push(`[掃描文字]\n${ocrText.trim()}`);
+    }
+
+    return parts.join("\n\n").trim();
+  }
+
+  function autoFillFormFromScan({ barcode, ocrText }) {
+    const nameInput = $("nameInput");
+    const brandInput = $("brandInput");
+    const seriesInput = $("seriesInput");
+    const notesInput = $("notesInput");
+
+    const finalText = normalizeOCRText(ocrText || "");
+    const inferredBrand = inferBrandFromText(finalText);
+    const inferredSeries = inferSeriesFromText(finalText);
+    const inferredName = inferNameFromText(finalText);
+
+    if (nameInput && !nameInput.value.trim() && inferredName) {
+      nameInput.value = inferredName;
+    }
+
+    if (brandInput && !brandInput.value.trim() && inferredBrand) {
+      brandInput.value = inferredBrand;
+    }
+
+    if (seriesInput && !seriesInput.value.trim() && inferredSeries) {
+      seriesInput.value = inferredSeries;
+    }
+
+    if (notesInput) {
+      notesInput.value = mergeNotesWithScan(notesInput.value, barcode, finalText);
+    }
+
+    const summary = [];
+
+    if (barcode?.rawValue) {
+      summary.push(`<div class="scan-result-title">條碼辨識成功</div><p>${escapeHtml(barcode.rawValue)}</p>`);
+    }
+
+    if (finalText) {
+      summary.push(`<div class="scan-result-title">文字辨識結果</div><p>${escapeHtml(finalText)}</p>`);
+    }
+
+    const filled = [];
+    if (nameInput?.value.trim()) filled.push(`名稱：${escapeHtml(nameInput.value.trim())}`);
+    if (brandInput?.value.trim()) filled.push(`品牌：${escapeHtml(brandInput.value.trim())}`);
+    if (seriesInput?.value.trim()) filled.push(`系列：${escapeHtml(seriesInput.value.trim())}`);
+
+    if (filled.length) {
+      summary.push(`<div class="scan-result-meta">已自動填入：${filled.join("｜")}</div>`);
+    }
+
+    if (!summary.length) {
+      summary.push(`<p>未辨識到可用內容，請調整角度、光線或改用手動輸入。</p>`);
+    }
+
+    setScanResultHTML(summary.join(""));
+  }
+
+  async function captureAndScan() {
+    if (state.isScanning) return;
+
+    const video = $("cameraPreview");
+    if (!video?.srcObject) {
+      alert("請先開啟鏡頭");
+      return;
+    }
+
+    const frame = captureCurrentFrame();
+    if (!frame) {
+      alert("目前無法擷取畫面，請稍後再試");
+      return;
+    }
+
+    state.isScanning = true;
+    setScanResultHTML(`<p>辨識中，請稍候...</p>`);
+
+    try {
+      const barcode = await detectBarcodeFromCanvas(frame.canvas);
+      let ocrText = "";
+
+      try {
+        ocrText = await recognizeTextFromCanvas(frame.canvas);
+      } catch (ocrError) {
+        console.warn("OCR error:", ocrError);
+      }
+
+      autoFillFormFromScan({ barcode, ocrText });
+    } catch (error) {
+      console.error("captureAndScan error:", error);
+      setScanResultHTML(`<p>辨識失敗：${escapeHtml(error?.message || String(error))}</p>`);
+    } finally {
+      state.isScanning = false;
+    }
+  }
+
   function bindAppEvents() {
     on("addBtn", "click", startCreate);
     on("itemForm", "submit", submitForm);
@@ -948,6 +1278,18 @@
     });
 
     on("toggleEditBtn", "click", toggleEditMode);
+
+    on("manualModeBtn", "click", () => {
+      setScanMode("manual");
+    });
+
+    on("scanModeBtn", "click", () => {
+      setScanMode("scan");
+    });
+
+    on("startCameraBtn", "click", startCamera);
+    on("stopCameraBtn", "click", stopCamera);
+    on("captureBtn", "click", captureAndScan);
 
     const itemList = $("itemList");
     if (itemList) {
@@ -1080,6 +1422,7 @@
     bindAuthEvents();
     bindAppEvents();
     applySavedTheme();
+    resetScanUI();
 
     if (!window.StorageManager?.getSessionUser) return;
 
@@ -1126,6 +1469,11 @@
     deferredInstallPrompt = null;
     const installBtn = $("installAppBtn");
     if (installBtn) installBtn.classList.add("hidden");
+  });
+
+  window.addEventListener("pagehide", stopCamera);
+  window.addEventListener("visibilitychange", () => {
+    if (document.hidden) stopCamera();
   });
 
   init();

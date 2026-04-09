@@ -145,6 +145,32 @@
       <form id="itemForm" class="form-grid">
         <input type="hidden" id="itemId">
 
+        <div class="input-mode-switch">
+          <button type="button" id="manualModeBtn" class="mode-button active">手動輸入</button>
+          <button type="button" id="scanModeBtn" class="mode-button">鏡頭掃描</button>
+        </div>
+
+        <div id="scannerSection" class="scanner-section hidden">
+          <div class="scanner-preview-card">
+            <video id="cameraPreview" autoplay playsinline muted></video>
+            <div id="scannerEmptyHint" class="scanner-empty-hint">
+              尚未開啟鏡頭
+            </div>
+          </div>
+
+          <canvas id="captureCanvas" class="hidden"></canvas>
+
+          <div class="scanner-btn-row">
+            <button type="button" id="startCameraBtn" class="secondary-btn">開啟鏡頭</button>
+            <button type="button" id="captureBtn" class="secondary-btn">拍照辨識</button>
+            <button type="button" id="stopCameraBtn" class="danger-btn">關閉鏡頭</button>
+          </div>
+
+          <div id="scanResult" class="scan-result empty-card">
+            <p>掃描結果會顯示在這裡</p>
+          </div>
+        </div>
+
         <label class="form-label" for="nameInput">模型名稱 *</label>
         <input id="nameInput" class="form-input" type="text" required>
 
@@ -465,6 +491,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="supabase.js"></script>
   <script src="storage.js"></script>
   <script src="ui.js"></script>

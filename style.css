@@ -131,7 +131,8 @@ canvas {
 .text-button,
 .primary-btn,
 .secondary-btn,
-.danger-btn {
+.danger-btn,
+.mode-button {
   border: 0;
   cursor: pointer;
 }
@@ -212,7 +213,9 @@ canvas {
 .empty-card,
 .modal-panel,
 .stats-list-item,
-.auth-card {
+.auth-card,
+.scanner-preview-card,
+.scan-result {
   background: var(--panel);
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
@@ -778,6 +781,95 @@ button {
 
 .install-hint p {
   margin: 4px 0;
+}
+
+/* scanner */
+.input-mode-switch {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.mode-button {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--panel-2);
+  color: var(--text);
+  font-weight: 800;
+  transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mode-button.active {
+  background: var(--accent);
+  color: var(--accent-text);
+  box-shadow: var(--shadow);
+}
+
+.scanner-section {
+  margin-bottom: 14px;
+}
+
+.scanner-preview-card {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 18px;
+  min-height: 220px;
+  background: #000;
+}
+
+#cameraPreview {
+  width: 100%;
+  height: auto;
+  min-height: 220px;
+  max-height: 360px;
+  object-fit: cover;
+  display: block;
+  background: #000;
+}
+
+.scanner-empty-hint {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+  background: rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+}
+
+.scanner-btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.scan-result {
+  border-radius: 16px;
+  padding: 14px;
+  color: var(--text);
+}
+
+.scan-result p {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+.scan-result-title {
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  color: var(--accent);
+}
+
+.scan-result-meta {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--muted);
 }
 
 @media (min-width: 768px) {
