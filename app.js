@@ -83,6 +83,8 @@
     }
   };
 
+  let deferredInstallPrompt = null;
+
   function $(id) {
     return document.getElementById(id);
   }
@@ -94,6 +96,72 @@
 
   function generateId() {
     return crypto.randomUUID();
+  }
+
+  function isStandaloneMode() {
+    return window.matchMedia("(display-mode: standalone)").matches
+      || window.navigator.standalone === true;
+  }
+
+  function isIOS() {
+    return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+  }
+
+  function isSafari() {
+    const ua = window.navigator.userAgent;
+    return /safari/i.test(ua) && !/crios|fxios|edgios|chrome|android/i.test(ua);
+  }
+
+  function showInstallGate() {
+    const installGate = $("installGate");
+    const loginPage = $("loginPage");
+    const appRoot = $("appRoot");
+    const installBtn = $("installAppBtn");
+    const iosHint = $("iosInstallHint");
+    const installMessage = $("installMessage");
+
+    if (installGate) installGate.classList.remove("hidden");
+    if (loginPage) loginPage.classList.add("hidden");
+    if (appRoot) appRoot.classList.add("hidden");
+
+    if (installBtn) installBtn.classList.add("hidden");
+    if (iosHint) iosHint.classList.add("hidden");
+
+    if (deferredInstallPrompt) {
+      if (installBtn) installBtn.classList.remove("hidden");
+      if (installMessage) {
+        installMessage.textContent = "這個 App 只能從主畫面啟動使用，請先加入主畫面。";
+      }
+      return;
+    }
+
+    if (isIOS() && isSafari()) {
+      if (iosHint) iosHint.classList.remove("hidden");
+      if (installMessage) {
+        installMessage.textContent = "iPhone / iPad 請先手動加入主畫面後再使用。";
+      }
+      return;
+    }
+
+    if (installMessage) {
+      installMessage.textContent = "請使用瀏覽器的安裝功能或選單中的「加入主畫面」。";
+    }
+  }
+
+  function hideInstallGate() {
+    const installGate = $("installGate");
+    if (installGate) installGate.classList.add("hidden");
+  }
+
+  async function handleInstallClick() {
+    if (!deferredInstallPrompt) return;
+
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+
+    const installBtn = $("installAppBtn");
+    if (installBtn) installBtn.classList.add("hidden");
   }
 
   function getModalPanel(id) {
@@ -947,6 +1015,14 @@
   }
 
   async function init() {
+    on("installAppBtn", "click", handleInstallClick);
+
+    if (!isStandaloneMode()) {
+      showInstallGate();
+      return;
+    }
+
+    hideInstallGate();
     showLoginPage();
     showLoginView();
 
@@ -980,6 +1056,26 @@
 
     registerServiceWorker();
   }
+
+  window.addEventListener("beforeinstallprompt", event => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+
+    if (!isStandaloneMode()) {
+      const installBtn = $("installAppBtn");
+      const installMessage = $("installMessage");
+      if (installBtn) installBtn.classList.remove("hidden");
+      if (installMessage) {
+        installMessage.textContent = "這個 App 只能從主畫面啟動使用，請先加入主畫面。";
+      }
+    }
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    const installBtn = $("installAppBtn");
+    if (installBtn) installBtn.classList.add("hidden");
+  });
 
   init();
 })();

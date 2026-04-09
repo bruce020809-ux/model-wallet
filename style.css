@@ -192,7 +192,8 @@ canvas {
 .item-card,
 .empty-card,
 .modal-panel,
-.stats-list-item {
+.stats-list-item,
+.auth-card {
   background: var(--panel);
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
@@ -585,11 +586,8 @@ canvas {
 .auth-card {
   width: 100%;
   max-width: 420px;
-  background: var(--panel);
-  border: 1px solid var(--line);
   border-radius: 24px;
   padding: 20px;
-  box-shadow: var(--shadow);
 }
 
 .auth-title {
@@ -602,6 +600,7 @@ canvas {
   margin: 0 0 16px;
   color: var(--muted);
   font-size: 14px;
+  line-height: 1.7;
 }
 
 .auth-input {
@@ -749,6 +748,17 @@ button {
   font-size: 12px;
   font-weight: 800;
   color: var(--accent);
+}
+
+.install-hint {
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.install-hint p {
+  margin: 4px 0;
 }
 
 @media (min-width: 768px) {
