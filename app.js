@@ -37,17 +37,6 @@
       accentText: "#FFFFFF",
       danger: "#C84B4B"
     },
-    violet: {
-      name: "Violet",
-      bg: "#E4CEF6",
-      panel: "#9D76C1",
-      panel2: "#713ABE",
-      text: "#240A34",
-      muted: "#E5E7EB",
-      accent: "#5B0788",
-      accentText: "#FFFFFF",
-      danger: "#C84B4B"
-    },
     berry: {
       name: "Berry",
       bg: "#FADEC9",
@@ -59,13 +48,24 @@
       accentText: "#FFFFFF",
       danger: "#B91C1C"
     },
+    violet: {
+      name: "Violet",
+      bg: "#E4CEF6",
+      panel: "#9D76C1",
+      panel2: "#713ABE",
+      text: "#F7F3FB",
+      muted: "#E9E2F2",
+      accent: "#CDB7E8",
+      accentText: "#2B1242",
+      danger: "#C84B4B"
+    },
     stone: {
       name: "Stone",
       bg: "#F1EFEF",
       panel: "#CCC8AA",
       panel2: "#7D7C7C",
       text: "#111111",
-      muted: "#666666",
+      muted: "#EEE9DA",
       accent: "#191717",
       accentText: "#FFFFFF",
       danger: "#C84B4B"
@@ -75,12 +75,13 @@
       bg: "#EBE4D1",
       panel: "#B4B4B3",
       panel2: "#26577C",
-      text: "#1B1B1B",
-      muted: "#6C6C6C",
+      text: "#111111",
+      muted: "#E9E4D8",
       accent: "#E55704",
       accentText: "#FFFFFF",
       danger: "#C62828"
     }
+    
   };
 
   let deferredInstallPrompt = null;
