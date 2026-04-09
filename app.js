@@ -232,6 +232,35 @@
     showAuthMessage("");
   }
 
+  function showVerifySuccessMessage() {
+    const verifyMessage = $("verifyMessage");
+    if (!verifyMessage) return;
+
+    verifyMessage.classList.remove("hidden");
+    setTimeout(() => {
+      verifyMessage.classList.add("hidden");
+    }, 5000);
+  }
+
+  function handleEmailVerificationReturn() {
+    const hash = window.location.hash || "";
+    const search = window.location.search || "";
+    const returnedFromVerify =
+      hash.includes("access_token")
+      || hash.includes("refresh_token")
+      || hash.includes("type=signup")
+      || search.includes("type=signup");
+
+    if (!returnedFromVerify) return;
+
+    showLoginPage();
+    showLoginView();
+    showVerifySuccessMessage();
+
+    const cleanUrl = `${window.location.origin}${window.location.pathname}`;
+    history.replaceState({}, document.title, cleanUrl);
+  }
+
   function isAnyModalOpen() {
     return [
       "editorModal",
@@ -424,12 +453,6 @@
   function setScanResultHTML(html) {
     const resultBox = $("scanResult");
     if (resultBox) resultBox.innerHTML = html;
-  }
-
-  function setScanResultText(text) {
-    const resultBox = $("scanResult");
-    if (!resultBox) return;
-    resultBox.innerHTML = `<p>${escapeHtml(text || "")}</p>`;
   }
 
   function escapeHtml(text) {
@@ -839,6 +862,7 @@
         email,
         password,
         options: {
+          emailRedirectTo: "https://bruce020809-ux.github.io/model-wallet/",
           data: {
             display_name: name,
             gender: gender
@@ -847,12 +871,19 @@
       });
 
       if (error) {
-        showAuthMessage(error.message, true);
+        const message = String(error.message || "").toLowerCase();
+
+        if (message.includes("rate limit")) {
+          showAuthMessage("寄送過於頻繁，請稍等幾分鐘再試", true);
+        } else {
+          showAuthMessage(error.message, true);
+        }
         return;
       }
 
-      showAuthMessage("註冊成功，請登入", false);
+      alert("請到信箱完成註冊");
       showLoginView();
+      showAuthMessage("請到信箱完成驗證後再登入", false);
 
       if ($("signupName")) $("signupName").value = "";
       if ($("signupGender")) $("signupGender").value = "";
@@ -1131,8 +1162,6 @@
   }
 
   function inferBrandFromText(text) {
-    const t = text.toLowerCase();
-
     if (/tomica limited vintage neo|limited vintage neo|lv-n/i.test(text)) return "TLV";
     if (/limited vintage/i.test(text)) return "TLV";
     if (/tomica premium/i.test(text)) return "Tomica";
@@ -1167,7 +1196,7 @@
       /^made in/i,
       /^scale/i,
       /^no\.\s*\d+/i,
-      /^\d{8,14}$/ // 條碼數字
+      /^\d{8,14}$/
     ];
 
     const goodLine = lines.find(line => {
@@ -1444,6 +1473,7 @@
     hideInstallGate();
     showLoginPage();
     showLoginView();
+    handleEmailVerificationReturn();
 
     bindAuthEvents();
     bindAppEvents();
