@@ -231,7 +231,7 @@ window.StorageManager = (() => {
   }
 
   function verifyProKey(key) {
-    const validKey = "TOMICA-PRO-2026";
+    const validKey = "RU03Y3TP6";
     return key === validKey;
   }
 

@@ -116,6 +116,22 @@
     return /safari/i.test(ua) && !/crios|fxios|edgios|chrome|android/i.test(ua);
   }
 
+  function isProUser() {
+    return window.StorageManager?.getProStatus
+      ? StorageManager.getProStatus()
+      : false;
+  }
+
+  function showProLockedMessage() {
+    alert("請輸入金鑰以解鎖更多專屬功能");
+  }
+
+  function requireProFeature() {
+    if (isProUser()) return true;
+    showProLockedMessage();
+    return false;
+  }
+
   function showInstallGate() {
     const installGate = $("installGate");
     const loginPage = $("loginPage");
@@ -909,6 +925,8 @@
   }
 
   function applyThemeByKey(themeKey) {
+    if (!requireProFeature()) return;
+
     const theme = THEMES[themeKey];
     if (!theme) return;
 
@@ -994,6 +1012,8 @@
   }
 
   async function startCamera() {
+    if (!requireProFeature()) return;
+
     const video = $("cameraPreview");
     if (!video) return;
 
@@ -1226,6 +1246,7 @@
   }
 
   async function captureAndScan() {
+    if (!requireProFeature()) return;
     if (state.isScanning) return;
 
     const video = $("cameraPreview");
@@ -1284,6 +1305,10 @@
     });
 
     on("scanModeBtn", "click", () => {
+      if (!requireProFeature()) {
+        setScanMode("manual");
+        return;
+      }
       setScanMode("scan");
     });
 
@@ -1338,6 +1363,7 @@
     });
 
     on("openThemeBtn", "click", () => {
+      if (!requireProFeature()) return;
       updateThemeSelection(getCurrentThemeKey());
       switchToChildModal("themeModal");
     });
