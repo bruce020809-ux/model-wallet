@@ -107,6 +107,20 @@
       || window.navigator.standalone === true;
   }
 
+  function isVerificationCallback() {
+    const hash = window.location.hash || "";
+    const search = window.location.search || "";
+
+    return (
+      hash.includes("access_token")
+      || hash.includes("refresh_token")
+      || hash.includes("type=signup")
+      || search.includes("type=signup")
+      || search.includes("token_hash")
+      || search.includes("type=email")
+    );
+  }
+
   function isIOS() {
     return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
   }
@@ -216,11 +230,24 @@
     if (appRoot) appRoot.classList.remove("hidden");
   }
 
+  function hideVerifyMessage() {
+    const verifyMessage = $("verifyMessage");
+    if (verifyMessage) verifyMessage.classList.add("hidden");
+  }
+
+  function showVerifyMessage(text) {
+    const verifyMessage = $("verifyMessage");
+    if (!verifyMessage) return;
+    verifyMessage.textContent = text;
+    verifyMessage.classList.remove("hidden");
+  }
+
   function showLoginView() {
     const loginView = $("loginView");
     const signupView = $("signupView");
     if (loginView) loginView.classList.remove("hidden");
     if (signupView) signupView.classList.add("hidden");
+    hideVerifyMessage();
     showAuthMessage("");
   }
 
@@ -229,33 +256,22 @@
     const signupView = $("signupView");
     if (loginView) loginView.classList.add("hidden");
     if (signupView) signupView.classList.remove("hidden");
+    hideVerifyMessage();
     showAuthMessage("");
   }
 
-  function showVerifySuccessMessage() {
-    const verifyMessage = $("verifyMessage");
-    if (!verifyMessage) return;
-
-    verifyMessage.classList.remove("hidden");
-    setTimeout(() => {
-      verifyMessage.classList.add("hidden");
-    }, 5000);
-  }
-
   function handleEmailVerificationReturn() {
-    const hash = window.location.hash || "";
-    const search = window.location.search || "";
-    const returnedFromVerify =
-      hash.includes("access_token")
-      || hash.includes("refresh_token")
-      || hash.includes("type=signup")
-      || search.includes("type=signup");
-
-    if (!returnedFromVerify) return;
+    if (!isVerificationCallback()) return;
 
     showLoginPage();
-    showLoginView();
-    showVerifySuccessMessage();
+
+    const loginView = $("loginView");
+    const signupView = $("signupView");
+    if (loginView) loginView.classList.remove("hidden");
+    if (signupView) signupView.classList.add("hidden");
+
+    showVerifyMessage("驗證成功，請回主畫面 App 登入");
+    showAuthMessage("");
 
     const cleanUrl = `${window.location.origin}${window.location.pathname}`;
     history.replaceState({}, document.title, cleanUrl);
@@ -530,12 +546,20 @@
   }
 
   async function removeItem(id) {
-    const ok = confirm("確定要刪除這筆模型資料嗎？");
+    const item = findItem(id);
+    if (!item) {
+      alert("找不到這筆模型資料");
+      return;
+    }
+
+    const ok = confirm(`確定要刪除「${item.name || "這筆模型"}」嗎？`);
     if (!ok) return;
 
     try {
       await StorageManager.deleteItem(id);
-      await reloadItems();
+      state.items = state.items.filter(entry => entry.id !== id);
+      refreshList();
+      alert("模型已刪除");
     } catch (error) {
       console.error(error);
       alert(`刪除失敗：${error?.message || error}`);
@@ -1465,7 +1489,7 @@
   async function init() {
     on("installAppBtn", "click", handleInstallClick);
 
-    if (!isStandaloneMode()) {
+    if (!isStandaloneMode() && !isVerificationCallback()) {
       showInstallGate();
       return;
     }
@@ -1479,6 +1503,11 @@
     bindAppEvents();
     applySavedTheme();
     resetScanUI();
+
+    if (isVerificationCallback()) {
+      registerServiceWorker();
+      return;
+    }
 
     if (!window.StorageManager?.getSessionUser) return;
 
